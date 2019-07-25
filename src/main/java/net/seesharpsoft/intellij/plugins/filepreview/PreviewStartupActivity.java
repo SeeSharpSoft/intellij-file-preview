@@ -5,7 +5,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -41,14 +41,15 @@ public class PreviewStartupActivity implements StartupActivity {
             }
             ProjectViewNode projectViewNode = (ProjectViewNode)userObject;
             VirtualFile currentFile = projectViewNode.getVirtualFile();
-            if (currentFile.isDirectory() || !currentFile.isValid()) {
+            if (currentFile == null || currentFile.isDirectory() || !currentFile.isValid()) {
                 return;
             }
 
             FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
             if (!fileEditorManager.isFileOpen(currentFile)) {
-                currentFile = openPreview(currentFile);
+                currentFile = getPreviewFile(currentFile);
             }
+            ApplicationManager.getApplication().assertIsDispatchThread();
             fileEditorManager.openFile(currentFile, false);
         }
     };
@@ -79,12 +80,15 @@ public class PreviewStartupActivity implements StartupActivity {
     public void closePreview() {
         if (myPreviewFile != null) {
             FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(myProject);
-            fileEditorManager.closeFile(myPreviewFile);
+            ApplicationManager.getApplication().assertIsDispatchThread();
+            fileEditorManager.closeFile(myPreviewFile, false, true);
             myPreviewFile = null;
         }
     }
 
-    public VirtualFile openPreview(VirtualFile file) {
+    public VirtualFile getPreviewFile(VirtualFile file) {
+        assert myPreviewFile == null;
+
         myPreviewFile = new PreviewVirtualFile(file);
         return myPreviewFile;
     }
