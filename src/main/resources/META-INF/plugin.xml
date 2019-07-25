@@ -1,0 +1,34 @@
+<idea-plugin>
+    <id>net.seesharpsoft.intellij.plugins.file-preview</id>
+    <name>File Preview</name>
+    <vendor url="https://github.com/SeeSharpSoft/intellij-csv-validator">
+        Martin Sommer
+    </vendor>
+
+    <description><![CDATA[
+
+        File Preview<br>
+        This must contain some description!
+        <em>TODO</em>
+
+    ]]></description>
+
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+        <projectViewPaneSelectionHelper implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewFileSelectionHelper" />
+    </extensions>
+
+    <project-components>
+        <component>
+            <implementation-class>net.seesharpsoft.intellij.plugins.filepreview.PreviewProjectComponent</implementation-class>
+        </component>
+    </project-components>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
+</idea-plugin>
