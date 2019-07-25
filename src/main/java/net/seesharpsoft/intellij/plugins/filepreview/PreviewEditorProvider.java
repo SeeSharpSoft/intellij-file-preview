@@ -4,6 +4,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import org.jdom.Element;
@@ -59,6 +60,16 @@ public class PreviewEditorProvider implements AsyncFileEditorProvider, DumbAware
 
     @Override
     public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
+    }
+
+    @Override
+    public void disposeEditor(@NotNull FileEditor editor) {
+        FileEditorProvider fileEditorProvider = editor.getUserData(FileEditorProvider.KEY);
+        if (fileEditorProvider != null) {
+            fileEditorProvider.disposeEditor(editor);
+        } else {
+            Disposer.dispose(editor);
+        }
     }
 
     @NotNull

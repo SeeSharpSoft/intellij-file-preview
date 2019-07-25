@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '0.1'
+version '0.2'
 
 sourceCompatibility = 1.8
 
@@ -22,7 +22,8 @@ intellij {
 }
 patchPluginXml {
     changeNotes """
-        Initial version - preview editor
+        0.1 - Initial version - preview editor
+        0.2 - use proper event subscription
       """
 }
 

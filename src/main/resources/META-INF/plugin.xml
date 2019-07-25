@@ -17,13 +17,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
         <fileEditorProvider implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewEditorProvider" />
+        <postStartupActivity implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewStartupActivity" />
     </extensions>
-
-    <project-components>
-        <component>
-            <implementation-class>net.seesharpsoft.intellij.plugins.filepreview.PreviewProjectComponent</implementation-class>
-        </component>
-    </project-components>
 
     <actions>
         <!-- Add your actions here -->
