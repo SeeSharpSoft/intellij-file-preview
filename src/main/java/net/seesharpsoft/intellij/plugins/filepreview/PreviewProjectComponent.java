@@ -1,6 +1,7 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,10 +9,9 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -24,16 +24,15 @@ public class PreviewProjectComponent implements ProjectComponent {
 
     private boolean initialized = false;
 
-    private boolean previewing = false;
-    private VirtualFile previewFile;
+    private PreviewVirtualFile previewFile;
 
-    private FileEditorManagerImpl fileEditorManager;
+    private FileEditorManager fileEditorManager;
 
     public PreviewProjectComponent(Project project) {
         myProject = project;
     }
 
-    public void projectOpened2() {
+    public void initializeProjectViewHandler() {
         AbstractProjectViewPane viewPane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
 
         if (viewPane == null) {
@@ -42,63 +41,37 @@ public class PreviewProjectComponent implements ProjectComponent {
 
         initialized = true;
 
-        fileEditorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(myProject);
-        fileEditorManager.addFileEditorManagerListener(new FileEditorManagerListener() {
-            @Override
-            public void fileOpenedSync(@NotNull FileEditorManager source, @NotNull VirtualFile file,
-                                       @NotNull Pair<FileEditor[], FileEditorProvider[]> editors) {
-                if (previewing) {
-                    previewing = false;
-                    return;
-                }
-                if (file == previewFile) {
-                    resetPreview();
-                }
-            }
-
-            @Override
-            public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-                if (event.getOldFile() == previewFile) {
-                    closePreviewEditor();
-                }
-            }
-        });
-
+        fileEditorManager = FileEditorManager.getInstance(myProject);
         viewPane.getTree().addTreeSelectionListener(treeSelectionEvent -> {
+            closePreview();
+
             Object userObject = ((DefaultMutableTreeNode)treeSelectionEvent.getPath().getLastPathComponent()).getUserObject();
-            if (!(userObject instanceof PsiFileNode)) {
+            if (!(userObject instanceof ProjectViewNode)) {
+                return;
+            }
+            ProjectViewNode projectViewNode = (ProjectViewNode)userObject;
+            VirtualFile currentFile = projectViewNode.getVirtualFile();
+            if (currentFile.isDirectory() || !currentFile.isValid()) {
                 return;
             }
 
-            PsiFileNode psiFileNode = (PsiFileNode)userObject;
-
-            closePreviewEditor();
-
-            VirtualFile currentFile = psiFileNode.getVirtualFile();
             if (!fileEditorManager.isFileOpen(currentFile)) {
-                setPreview(currentFile);
+                currentFile = openPreview(currentFile);
             }
-            fileEditorManager.openFile(currentFile, true);
-
+            fileEditorManager.openFile(currentFile, false);
         });
     }
 
-    public void closePreviewEditor() {
-        FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+    public void closePreview() {
         if (previewFile != null) {
             fileEditorManager.closeFile(previewFile);
+            previewFile = null;
         }
-        resetPreview();
     }
 
-    public void setPreview(VirtualFile file) {
-        previewFile = file;
-        previewing = true;
-    }
-
-    public void resetPreview() {
-        previewFile = null;
-        previewing = false;
+    public VirtualFile openPreview(VirtualFile file) {
+        previewFile = new PreviewVirtualFile(file);
+        return previewFile;
     }
 
     @Override
@@ -109,10 +82,25 @@ public class PreviewProjectComponent implements ProjectComponent {
             @Override
             public void beforeCommandFinished(@NotNull CommandEvent event) {
                 if (!initialized) {
-                    projectOpened2();
+                    initializeProjectViewHandler();
                 }
             }
         });
+        connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+            @Override
+            public void fileOpenedSync(@NotNull FileEditorManager source, @NotNull VirtualFile file,
+                                       @NotNull Pair<FileEditor[], FileEditorProvider[]> editors) {
+                if (!(file instanceof PreviewVirtualFile)) {
+                    closePreview();
+                }
+            }
 
+            @Override
+            public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+                if (!(event.getNewProvider() instanceof PreviewEditorProvider)) {
+                    closePreview();
+                }
+            }
+        });
     }
 }

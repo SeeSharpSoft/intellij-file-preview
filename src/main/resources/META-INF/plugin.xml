@@ -1,16 +1,13 @@
 <idea-plugin>
     <id>net.seesharpsoft.intellij.plugins.file-preview</id>
     <name>File Preview</name>
-    <vendor url="https://github.com/SeeSharpSoft/intellij-csv-validator">
+    <vendor url="https://github.com/SeeSharpSoft/intellij-file-preview">
         Martin Sommer
     </vendor>
 
     <description><![CDATA[
-
-        File Preview<br>
-        This must contain some description!
-        <em>TODO</em>
-
+        File Preview & Fast File Open<br>
+        <em>This is an early version and meant for private testing only!</em>
     ]]></description>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
@@ -19,7 +16,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
-        <projectViewPaneSelectionHelper implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewFileSelectionHelper" />
+        <fileEditorProvider implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewEditorProvider" />
     </extensions>
 
     <project-components>
