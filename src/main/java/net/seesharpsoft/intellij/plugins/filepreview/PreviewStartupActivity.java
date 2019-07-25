@@ -120,7 +120,7 @@ public class PreviewStartupActivity implements StartupActivity {
 
         connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
             @Override
-            public void projectClosing(@NotNull Project project) {
+            public void projectClosingBeforeSave(@NotNull Project project) {
                 if (myProject.equals(project)) {
                     shutdown();
                 }
