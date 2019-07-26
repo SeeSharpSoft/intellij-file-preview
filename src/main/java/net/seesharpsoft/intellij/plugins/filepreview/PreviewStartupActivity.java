@@ -1,5 +1,6 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PreviewStartupActivity implements StartupActivity {
+public class PreviewStartupActivity implements StartupActivity, DumbAware {
 
     Map<Project, PreviewProjectHandler> myPreviewHandlerMap = new HashMap<>();
 

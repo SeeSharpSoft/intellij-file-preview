@@ -1,18 +1,25 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
+import java.awt.*;
 
 public class PreviewProjectHandler {
 
@@ -21,14 +28,7 @@ public class PreviewProjectHandler {
 
     private final TreeSelectionListener myTreeSelectionListener = treeSelectionEvent -> {
         closePreview();
-
-        Object userObject = ((DefaultMutableTreeNode)treeSelectionEvent.getPath().getLastPathComponent()).getUserObject();
-        if (!(userObject instanceof ProjectViewNode)) {
-            return;
-        }
-
-        ProjectViewNode projectViewNode = (ProjectViewNode)userObject;
-        openPreviewOrEditor(projectViewNode.getVirtualFile());
+        ApplicationManager.getApplication().invokeLater(() -> openPreviewOrEditor((Component)treeSelectionEvent.getSource()));
     };
 
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
@@ -84,16 +84,27 @@ public class PreviewProjectHandler {
         myProject = null;
     }
 
-    public void openPreviewOrEditor(VirtualFile file) {
-        if (file == null || file.isDirectory() || !file.isValid()) {
-            return;
-        }
+    public void openPreviewOrEditor(final Component tree) {
+        DataContext dataContext = DataManager.getInstance().getDataContext(tree);
+        getReady(dataContext).doWhenDone(() -> TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+            DataContext context = DataManager.getInstance().getDataContext(tree);
+            VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
+            if (file == null || file.isDirectory() || !file.isValid()) {
+                return;
+            }
+            FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+            if (!fileEditorManager.isFileOpen(file)) {
+                file = createAndSetPreviewFile(file);
+            }
+            if (file != null) {
+                fileEditorManager.openFile(file, false);
+            }
+        }));
+    }
 
-        FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-        if (!fileEditorManager.isFileOpen(file)) {
-            file = createAndSetPreviewFile(file);
-        }
-        fileEditorManager.openFile(file, false);
+    private ActionCallback getReady(DataContext context) {
+        ToolWindow toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(context);
+        return toolWindow != null ? toolWindow.getReady(this) : ActionCallback.DONE;
     }
 
     public void closePreview() {
@@ -105,9 +116,10 @@ public class PreviewProjectHandler {
     }
 
     public VirtualFile createAndSetPreviewFile(VirtualFile file) {
-        assert myPreviewFile == null : "only one preview file at a time";
-
-        myPreviewFile = new PreviewVirtualFile(file);
-        return myPreviewFile;
+        if (myPreviewFile == null) {
+            myPreviewFile = new PreviewVirtualFile(file);
+            return myPreviewFile;
+        }
+        return null;
     }
 }
