@@ -21,7 +21,7 @@
          on how to target different products -->
     <depends>com.intellij.modules.lang</depends>
 
-    <idea-version since-build="172.2273.8" />
+    <idea-version since-build="182.5262.2" />
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
