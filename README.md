@@ -1,21 +1,30 @@
+[![Plugin version](https://img.shields.io/jetbrains/plugin/d/12778-file-preview.svg)](https://plugins.jetbrains.com/plugin/12778-file-preview)
+
 # Lightweight File Preview & Fast Open Plugin
   
 Compatible with _IntelliJ IDEA  PhpStorm  WebStorm  PyCharm  RubyMine  AppCode  CLion  Gogland  DataGrip  Rider  MPS  Android Studio_
 
-Inspired by: https://youtrack.jetbrains.com/issue/IDEA-130918
+This plugin enables a quick file preview on simple selecting files in Project View - similar to the preview in Sublime.</em><br><br>
 
+*Features:*
+- show preview (open temporary editor) of selected file</li>
+- focus editor of selected file if already opened</li>
 
-### Preview
+This plugin is fresh like a mild breeze in summer - please contribute issues, ideas and feedback. Thanks!
 
-NOTE: This project is in an early state and not available in the Jetbrains plugin repository. If you like to get a preview, please follow one of the follwing instructions.
+(inspired by https://youtrack.jetbrains.com/issue/IDEA-130918)
 
-#### Packaged
+## Installation
 
-Please download the latest plugin from the releases (Assets -> *file-preview-<version>.jar*) and install it manually in your preferred IDE:
+Install it from the Jetbrains plugin repository within your IDE (**recommended**):
 
-File > Settings > Plugins > _top cogwheel_ > Install plugin from disk...
+- _File > Settings > Plugins > Browse repositories... > Search 'File Preview' > Category 'Editor'_
 
-#### Source code
+You can also download the JAR package from the [Jetbrains plugin repository](https://plugins.jetbrains.com/plugin/12778-file-preview) or from [GitHub Releases](https://github.com/SeeSharpSoft/intellij-file-preview/releases) and add it manually to your plugins:
+
+- _File > Settings > Plugins > Install plugin from disk..._
+
+## Build & Run from source code
 
 Clone this repository (https://github.com/SeeSharpSoft/intellij-file-preview.git).
 
