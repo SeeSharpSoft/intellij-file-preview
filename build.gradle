@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '0.2'
+version '1.0'
 
 sourceCompatibility = 1.8
 
@@ -19,11 +19,13 @@ dependencies {
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
     version '2019.1'
+    updateSinceUntilBuild false
 }
 patchPluginXml {
     changeNotes """
-        0.1 - Initial version - preview editor
-        0.2 - use proper event subscription
+<pre style="font-family: sans-serif">
+NEW: First release!
+</pre>
       """
 }
 
