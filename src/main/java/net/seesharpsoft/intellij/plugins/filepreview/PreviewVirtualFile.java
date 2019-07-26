@@ -58,7 +58,7 @@ public class PreviewVirtualFile extends VirtualFile {
 
     @Override
     public VirtualFile getParent() {
-        return null;
+        return source.getParent();
     }
 
     @Override
