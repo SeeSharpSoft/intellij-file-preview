@@ -3,7 +3,6 @@ package net.seesharpsoft.intellij.plugins.filepreview;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -12,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 
@@ -21,28 +19,16 @@ public class PreviewProjectHandler {
     private Project myProject;
     private PreviewVirtualFile myPreviewFile;
 
-    private final TreeSelectionListener myTreeSelectionListener = new TreeSelectionListener() {
-        @Override
-        public void valueChanged(TreeSelectionEvent treeSelectionEvent) {
-            closePreview();
+    private final TreeSelectionListener myTreeSelectionListener = treeSelectionEvent -> {
+        closePreview();
 
-            Object userObject = ((DefaultMutableTreeNode)treeSelectionEvent.getPath().getLastPathComponent()).getUserObject();
-            if (!(userObject instanceof ProjectViewNode)) {
-                return;
-            }
-            ProjectViewNode projectViewNode = (ProjectViewNode)userObject;
-            VirtualFile currentFile = projectViewNode.getVirtualFile();
-            if (currentFile == null || currentFile.isDirectory() || !currentFile.isValid()) {
-                return;
-            }
-
-            FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-            if (!fileEditorManager.isFileOpen(currentFile)) {
-                currentFile = createAndSetPreviewFile(currentFile);
-            }
-            ApplicationManager.getApplication().assertIsDispatchThread();
-            fileEditorManager.openFile(currentFile, false);
+        Object userObject = ((DefaultMutableTreeNode)treeSelectionEvent.getPath().getLastPathComponent()).getUserObject();
+        if (!(userObject instanceof ProjectViewNode)) {
+            return;
         }
+
+        ProjectViewNode projectViewNode = (ProjectViewNode)userObject;
+        openPreviewOrEditor(projectViewNode.getVirtualFile());
     };
 
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
@@ -96,6 +82,18 @@ public class PreviewProjectHandler {
         }
 
         myProject = null;
+    }
+
+    public void openPreviewOrEditor(VirtualFile file) {
+        if (file == null || file.isDirectory() || !file.isValid()) {
+            return;
+        }
+
+        FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+        if (!fileEditorManager.isFileOpen(file)) {
+            file = createAndSetPreviewFile(file);
+        }
+        fileEditorManager.openFile(file, false);
     }
 
     public void closePreview() {
