@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.2'
+version '1.2.1'
 
 sourceCompatibility = 1.8
 
@@ -27,6 +27,7 @@ patchPluginXml {
 NEW: First release!
 FIX: since build updated
 FIX: Write-unsafe context (#2)
+FIX: Unreliable PreviewStartupActivity#register (#3)
 </pre>
       """
 }
