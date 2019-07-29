@@ -60,6 +60,7 @@ public class PreviewEditorProvider implements AsyncFileEditorProvider, DumbAware
 
     @Override
     public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
+        // intentionally not persisting preview state for now
     }
 
     @Override

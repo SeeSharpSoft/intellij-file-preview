@@ -14,14 +14,14 @@ public class PreviewVirtualFile extends VirtualFile {
     public static final String NAME_PREFIX = "<<";
     public static final String NAME_SUFFIX = ">>";
 
-    private VirtualFile source;
+    private VirtualFile mySource;
 
     public PreviewVirtualFile(VirtualFile source) {
-        this.source = source;
+        this.mySource = source;
     }
 
     public VirtualFile getSource() {
-        return source;
+        return mySource;
     }
 
     @NotNull
@@ -59,7 +59,7 @@ public class PreviewVirtualFile extends VirtualFile {
 
     @Override
     public VirtualFile getParent() {
-        return source.getParent();
+        return mySource.getParent();
     }
 
     @Override
@@ -91,7 +91,7 @@ public class PreviewVirtualFile extends VirtualFile {
 
     @Override
     public void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable) {
-
+        getSource().refresh(asynchronous, recursive, postRunnable);
     }
 
     @Override
