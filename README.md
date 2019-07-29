@@ -14,7 +14,7 @@ _Features:_
 
 This plugin is fresh like a mild breeze in summer - please contribute issues, ideas and feedback. Thanks!
 
-(inspired by [https://youtrack.jetbrains.com/issue/IDEA-130918]())
+(inspired by https://youtrack.jetbrains.com/issue/IDEA-130918)
 
 ## Installation
 
@@ -28,7 +28,7 @@ You can also download the JAR package from the [Jetbrains plugin repository](htt
 
 ## Build & Run from source code
 
-Clone this repository ([https://github.com/SeeSharpSoft/intellij-file-preview.git]()).
+Clone this repository (https://github.com/SeeSharpSoft/intellij-file-preview.git).
 
 Build the plugin:
 
