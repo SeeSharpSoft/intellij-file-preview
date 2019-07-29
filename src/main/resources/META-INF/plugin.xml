@@ -1,13 +1,13 @@
 <idea-plugin>
     <id>net.seesharpsoft.intellij.plugins.file-preview</id>
-    <name>File Preview</name>
+    <name>Quick File Preview</name>
     <vendor url="https://github.com/SeeSharpSoft/intellij-file-preview">
         Martin Sommer
     </vendor>
 
     <description><![CDATA[
         <b>File Preview</b><br><br>
-        <em>This plugin enables a quick file preview on simple selecting files in Project View - similar to the preview in Sublime.</em><br><br>
+        <em>This plugin enables a quick file preview/open/edit on simple selecting files in Project View - similar to the preview in Sublime or VSCode.</em><br><br>
         <b>Features:</b>
         <ul>
             <li>show preview (open temporary editor) of selected file</li>
@@ -17,19 +17,13 @@
         This plugin is fresh like a mild breeze in summer - please contribute issues, ideas and feedback in <a href="https://github.com/SeeSharpSoft/intellij-file-preview" target="_blank">GitHub</a>.
     ]]></description>
 
-    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-         on how to target different products -->
+    <!-- http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html -->
     <depends>com.intellij.modules.lang</depends>
 
     <idea-version since-build="182.5262.2" />
 
     <extensions defaultExtensionNs="com.intellij">
-        <!-- Add your extensions here -->
         <fileEditorProvider implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewEditorProvider" />
         <postStartupActivity implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewStartupActivity" />
     </extensions>
-
-    <actions>
-        <!-- Add your actions here -->
-    </actions>
 </idea-plugin>
