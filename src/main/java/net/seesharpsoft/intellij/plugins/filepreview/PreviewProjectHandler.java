@@ -107,15 +107,16 @@ public class PreviewProjectHandler {
         return toolWindow != null ? toolWindow.getReady(this) : ActionCallback.DONE;
     }
 
-    public void closePreview() {
+    public synchronized void closePreview() {
         if (myPreviewFile != null) {
-            FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
-            fileEditorManager.closeFile(myPreviewFile, false, true);
+            VirtualFile closingPreviewFile = myPreviewFile;
             myPreviewFile = null;
+            FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
+            fileEditorManager.closeFile(closingPreviewFile, false, true);
         }
     }
 
-    public VirtualFile createAndSetPreviewFile(VirtualFile file) {
+    public synchronized VirtualFile createAndSetPreviewFile(VirtualFile file) {
         if (myPreviewFile == null) {
             myPreviewFile = new PreviewVirtualFile(file);
             return myPreviewFile;
