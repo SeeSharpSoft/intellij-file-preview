@@ -60,6 +60,7 @@ public class PreviewStartupActivity implements StartupActivity, DumbAware {
                     unregister(activityProject, connection);
                 }
             }
+
             @Override
             public void stateChanged() {
                 ToolWindow window = ToolWindowManager.getInstance(activityProject).getToolWindow(ToolWindowId.PROJECT_VIEW);

@@ -39,7 +39,7 @@ public class PreviewEditorProvider implements AsyncFileEditorProvider, DumbAware
         if (!(file instanceof PreviewVirtualFile)) {
             return false;
         }
-        VirtualFile actualFile = ((PreviewVirtualFile)file).getSource();
+        VirtualFile actualFile = ((PreviewVirtualFile) file).getSource();
         if (SingleRootFileViewProvider.isTooLargeForIntelligence(actualFile)) {
             return false;
         }
@@ -79,7 +79,7 @@ public class PreviewEditorProvider implements AsyncFileEditorProvider, DumbAware
         return new AsyncFileEditorProvider.Builder() {
             @Override
             public FileEditor build() {
-                VirtualFile actualFile = ((PreviewVirtualFile)virtualFile).getSource();
+                VirtualFile actualFile = ((PreviewVirtualFile) virtualFile).getSource();
                 FileEditorProvider fileEditorProvider = findSourceProvider(project, actualFile);
                 return fileEditorProvider.createEditor(project, actualFile);
             }

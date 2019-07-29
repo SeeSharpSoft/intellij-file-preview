@@ -28,7 +28,7 @@ public class PreviewProjectHandler {
 
     private final TreeSelectionListener myTreeSelectionListener = treeSelectionEvent -> {
         closePreview();
-        ApplicationManager.getApplication().invokeLater(() -> openPreviewOrEditor((Component)treeSelectionEvent.getSource()));
+        ApplicationManager.getApplication().invokeLater(() -> openPreviewOrEditor((Component) treeSelectionEvent.getSource()));
     };
 
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
@@ -109,7 +109,7 @@ public class PreviewProjectHandler {
 
     public void closePreview() {
         if (myPreviewFile != null) {
-            FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(myProject);
+            FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
             fileEditorManager.closeFile(myPreviewFile, false, true);
             myPreviewFile = null;
         }
