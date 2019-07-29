@@ -2,6 +2,7 @@ package net.seesharpsoft.intellij.plugins.filepreview;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import org.apache.commons.io.output.NullOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,7 @@ public class PreviewVirtualFile extends VirtualFile {
     @NotNull
     @Override
     public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-        return null;
+        return NullOutputStream.NULL_OUTPUT_STREAM;
     }
 
     @NotNull
