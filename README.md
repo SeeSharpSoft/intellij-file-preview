@@ -1,4 +1,5 @@
 [![Plugin version](https://img.shields.io/jetbrains/plugin/d/12778-file-preview.svg)](https://plugins.jetbrains.com/plugin/12778-file-preview)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/97769359388e44bfb7101346d510fccf)](https://www.codacy.com/app/github_124/intellij-csv-validator?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SeeSharpSoft/intellij-csv-validator&amp;utm_campaign=Badge_Grade)
 
 # Lightweight File Preview & Fast Open Plugin
   
