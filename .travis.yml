@@ -3,8 +3,8 @@ jdk:
   - oraclejdk8
 
 env:
-  - IDEA_VERSION=PC-182.5262.2
-  - IDEA_VERSION=IC-192.5728.98
+  - IDEA_VERSION=CL-2018.3.4
+  - IDEA_VERSION=PC-LATEST-EAP-SNAPSHOT
 
 script: xvfb-run gradle check
 
@@ -14,7 +14,7 @@ after_success:
 jobs:
   include:
     - if: type = pull_request
-      env: IDEA_VERSION=PC-LATEST-EAP-SNAPSHOT
+      env: IDEA_VERSION=IC-192.5728.98
       script: xvfb-run gradle check verifyPlugin
     - stage: deploy
       if: branch IN (Stable) AND type = push
