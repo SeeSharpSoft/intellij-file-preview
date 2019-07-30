@@ -52,6 +52,8 @@ public class PreviewProjectHandler {
     };
 
     public static final PreviewProjectHandler createIfPossible(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
+        assert !project.isDisposed() : "project should not be disposed";
+
         PreviewProjectHandler previewProjectHandler = new PreviewProjectHandler();
         if (previewProjectHandler.init(project, messageBusConnection)) {
             return previewProjectHandler;

@@ -22,7 +22,7 @@ public class PreviewStartupActivity implements StartupActivity, DumbAware {
 
     protected void register(Project project, MessageBusConnection connection) {
         ApplicationManager.getApplication().invokeLater(() -> {
-            if (isRegistered(project)) {
+            if (isRegistered(project) || project.isDisposed()) {
                 return;
             }
             PreviewProjectHandler projectHandler = PreviewProjectHandler.createIfPossible(project, connection);
