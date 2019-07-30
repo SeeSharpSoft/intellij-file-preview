@@ -81,7 +81,7 @@ public class PreviewVirtualFile extends VirtualFile {
 
     @Override
     public long getTimeStamp() {
-        return 0;
+        return getSource().getTimeStamp();
     }
 
     @Override
@@ -97,5 +97,10 @@ public class PreviewVirtualFile extends VirtualFile {
     @Override
     public InputStream getInputStream() throws IOException {
         return null;
+    }
+
+    @Override
+    public long getModificationStamp() {
+        return getSource().getModificationStamp();
     }
 }
