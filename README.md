@@ -1,4 +1,5 @@
 [![Plugin version](https://img.shields.io/jetbrains/plugin/d/12778-file-preview.svg)](https://plugins.jetbrains.com/plugin/12778-file-preview)
+[![Build Status](https://travis-ci.org/SeeSharpSoft/intellij-file-preview.svg?branch=master)](https://travis-ci.org/SeeSharpSoft/intellij-file-preview)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/c37dba93cf5a4d46a61e0f570be245fb)](https://www.codacy.com/app/github_124/intellij-file-preview?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SeeSharpSoft/intellij-file-preview&amp;utm_campaign=Badge_Grade)
 
 # Lightweight File Preview & Fast Open Plugin
