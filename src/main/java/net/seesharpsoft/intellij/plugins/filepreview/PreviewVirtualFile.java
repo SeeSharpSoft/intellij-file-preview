@@ -1,5 +1,6 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import net.seesharpsoft.common.io.DummyOutputStream;
@@ -39,7 +40,7 @@ public class PreviewVirtualFile extends VirtualFile {
     @NotNull
     @Override
     public String getPath() {
-        return getSource().getPath();
+        return String.format("%s - Just a preview of '%s'", PreviewFileType.INSTANCE.getDefaultExtension(), getSource().getName());
     }
 
     @Override
@@ -81,7 +82,7 @@ public class PreviewVirtualFile extends VirtualFile {
 
     @Override
     public long getTimeStamp() {
-        return 0;
+        return getSource().getTimeStamp();
     }
 
     @Override
@@ -97,5 +98,15 @@ public class PreviewVirtualFile extends VirtualFile {
     @Override
     public InputStream getInputStream() throws IOException {
         return null;
+    }
+
+    @Override
+    public long getModificationStamp() {
+        return getSource().getModificationStamp();
+    }
+
+    @NotNull
+    public FileType getFileType() {
+        return PreviewFileType.INSTANCE;
     }
 }

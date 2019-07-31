@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.MessageBusConnection;
@@ -27,17 +26,21 @@ public class PreviewProjectHandler {
     private PreviewVirtualFile myPreviewFile;
 
     private final TreeSelectionListener myTreeSelectionListener = treeSelectionEvent -> {
-        closePreview();
-        ApplicationManager.getApplication().invokeLater(() -> openPreviewOrEditor((Component) treeSelectionEvent.getSource()));
+        Component tree = (Component) treeSelectionEvent.getSource();
+        ApplicationManager.getApplication().invokeLater(() -> {
+            openPreviewOrEditor(tree);
+        });
     };
 
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
         @Override
-        public void fileOpenedSync(@NotNull FileEditorManager source, @NotNull VirtualFile file,
-                                   @NotNull Pair<FileEditor[], FileEditorProvider[]> editors) {
-            if (!(file instanceof PreviewVirtualFile)) {
-                closePreview();
-            }
+        public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+
+        }
+
+        @Override
+        public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+
         }
 
         @Override
@@ -48,7 +51,22 @@ public class PreviewProjectHandler {
         }
     };
 
+    private final FileEditorManagerListener.Before myFileEditorManagerBeforeListener = new FileEditorManagerListener.Before() {
+        @Override
+        public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+            if (!(file instanceof PreviewVirtualFile) || !file.equals(myPreviewFile)) {
+                closePreview();
+                if (file instanceof PreviewVirtualFile) {
+                    myPreviewFile = (PreviewVirtualFile) file;
+                }
+            }
+
+        }
+    };
+
     public static final PreviewProjectHandler createIfPossible(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
+        assert !project.isDisposed() : "project should not be disposed";
+
         PreviewProjectHandler previewProjectHandler = new PreviewProjectHandler();
         if (previewProjectHandler.init(project, messageBusConnection)) {
             return previewProjectHandler;
@@ -68,6 +86,7 @@ public class PreviewProjectHandler {
 
         viewPane.getTree().addTreeSelectionListener(myTreeSelectionListener);
         messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myFileEditorManagerListener);
+        messageBusConnection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, myFileEditorManagerBeforeListener);
         return true;
     }
 
@@ -90,6 +109,9 @@ public class PreviewProjectHandler {
             DataContext context = DataManager.getInstance().getDataContext(tree);
             VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
             if (file == null || file.isDirectory() || !file.isValid()) {
+                if (PreviewSettings.getInstance().isPreviewClosedOnEmptySelection()) {
+                    closePreview();
+                }
                 return;
             }
             FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
@@ -107,7 +129,7 @@ public class PreviewProjectHandler {
         return toolWindow != null ? toolWindow.getReady(this) : ActionCallback.DONE;
     }
 
-    public synchronized void closePreview() {
+    public void closePreview() {
         if (myPreviewFile != null) {
             VirtualFile closingPreviewFile = myPreviewFile;
             myPreviewFile = null;
@@ -116,11 +138,10 @@ public class PreviewProjectHandler {
         }
     }
 
-    public synchronized VirtualFile createAndSetPreviewFile(VirtualFile file) {
-        if (myPreviewFile == null) {
-            myPreviewFile = new PreviewVirtualFile(file);
+    public VirtualFile createAndSetPreviewFile(VirtualFile file) {
+        if (myPreviewFile != null && myPreviewFile.getSource().equals(file)) {
             return myPreviewFile;
         }
-        return null;
+        return new PreviewVirtualFile(file);
     }
 }

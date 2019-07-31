@@ -1,6 +1,8 @@
 plugins {
     id 'java'
     id 'org.jetbrains.intellij' version '0.4.9'
+    id 'jacoco'
+    id 'com.github.kt3k.coveralls' version '2.8.2'
 }
 
 group 'net.seesharpsoft.intellij.plugins'
@@ -18,8 +20,9 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version 'IC-2019.2'
+    version System.getenv().getOrDefault('IDEA_VERSION', 'IC-191.5701.16')
     updateSinceUntilBuild false
+    instrumentCode true
 }
 patchPluginXml {
     changeNotes """
@@ -30,6 +33,11 @@ FIX: Write-unsafe context (#2)
 FIX: Unreliable PreviewStartupActivity#register (#3)
 </pre>
       """
+}
+publishPlugin {
+    username = System.getenv().getOrDefault('JI_USER', '')
+    password = System.getenv().getOrDefault('JI_PASSWORD', '')
+    channels = [System.getenv().getOrDefault('JI_CHANNELS', 'Testing')]
 }
 
 sourceSets {
@@ -48,5 +56,21 @@ sourceSets {
         resources {
             srcDirs = ['src/test/resources']
         }
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+    }
+}
+
+test {
+    jacoco {
+        enabled = true
+    }
+    testLogging {
+        exceptionFormat = 'full'
+        showStandardStreams = true
     }
 }
