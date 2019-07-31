@@ -40,7 +40,6 @@ public class PreviewVirtualFile extends VirtualFile {
     @NotNull
     @Override
     public String getPath() {
-        // TODO: to avoid further interaction with this dummy file, provide a non existing path - can do?
         return String.format("%s - Just a preview of '%s'", PreviewFileType.INSTANCE.getDefaultExtension(), getSource().getName());
     }
 
