@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.2.1'
+version '1.2.2'
 
 sourceCompatibility = 1.8
 
@@ -27,10 +27,7 @@ intellij {
 patchPluginXml {
     changeNotes """
 <pre style="font-family: sans-serif">
-NEW: First release!
-FIX: since build updated
-FIX: Write-unsafe context (#2)
-FIX: Unreliable PreviewStartupActivity#register (#3)
+NEW: quick navigation key listener (e.g. ESC to close editor, TAB to focus editor, ...)
 </pre>
       """
 }

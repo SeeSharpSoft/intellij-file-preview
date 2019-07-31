@@ -13,6 +13,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
 
     private JCheckBox cbClosePreviewOnEmptySelection;
     private JPanel mainPanel;
+    private JCheckBox cbKeyListenerEnabled;
 
     @NotNull
     @Override
@@ -40,18 +41,21 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     @Override
     public boolean isModified() {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
-        return isModified(cbClosePreviewOnEmptySelection, previewSettings.isPreviewClosedOnEmptySelection());
+        return isModified(cbClosePreviewOnEmptySelection, previewSettings.isPreviewClosedOnEmptySelection()) ||
+                isModified(cbKeyListenerEnabled, previewSettings.isQuickNavigationKeyListenerEnabled());
     }
 
     @Override
     public void reset() {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         cbClosePreviewOnEmptySelection.setSelected(previewSettings.isPreviewClosedOnEmptySelection());
+        cbKeyListenerEnabled.setSelected(previewSettings.isQuickNavigationKeyListenerEnabled());
     }
 
     @Override
     public void apply() throws ConfigurationException {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         previewSettings.setPreviewClosedOnEmptySelection(cbClosePreviewOnEmptySelection.isSelected());
+        previewSettings.setQuickNavigationKeyListenerEnabled(cbKeyListenerEnabled.isSelected());
     }
 }
