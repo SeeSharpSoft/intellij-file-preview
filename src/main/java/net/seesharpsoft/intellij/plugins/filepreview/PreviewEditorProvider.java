@@ -21,7 +21,7 @@ public class PreviewEditorProvider implements AsyncFileEditorProvider, DumbAware
 
     @Override
     public FileEditorPolicy getPolicy() {
-        return FileEditorPolicy.NONE;
+        return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
     }
 
     public FileEditorProvider findSourceProvider(@NotNull Project project, @NotNull VirtualFile file) {
