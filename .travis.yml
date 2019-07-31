@@ -1,6 +1,6 @@
 language: java
 jdk:
-  - oraclejdk8
+  - oraclejdk9
 
 env:
   - IDEA_VERSION=CL-2018.3.4
