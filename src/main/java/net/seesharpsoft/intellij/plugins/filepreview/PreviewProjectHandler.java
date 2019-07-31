@@ -9,11 +9,9 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.MessageBusConnection;
@@ -36,16 +34,13 @@ public class PreviewProjectHandler {
 
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
         @Override
-        public void fileOpenedSync(@NotNull FileEditorManager source, @NotNull VirtualFile file,
-                                   @NotNull Pair<FileEditor[], FileEditorProvider[]> editors) {
+        public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
 
         }
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            if (file instanceof PreviewVirtualFile) {
-                ApplicationManager.getApplication().invokeLater(() -> EditorHistoryManager.getInstance(myProject).removeFile(file));
-            }
+
         }
 
         @Override
@@ -105,12 +100,6 @@ public class PreviewProjectHandler {
             viewPane.getTree().removeTreeSelectionListener(myTreeSelectionListener);
         }
 
-        EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(myProject);
-        editorHistoryManager.getFileList()
-                .stream()
-                .filter(file -> file instanceof PreviewVirtualFile)
-                .forEach(file -> editorHistoryManager.removeFile(file));
-
         myProject = null;
     }
 
@@ -120,6 +109,9 @@ public class PreviewProjectHandler {
             DataContext context = DataManager.getInstance().getDataContext(tree);
             VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
             if (file == null || file.isDirectory() || !file.isValid()) {
+                if (PreviewSettings.getInstance().isPreviewClosedOnEmptySelection()) {
+                    closePreview();
+                }
                 return;
             }
             FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
@@ -137,7 +129,7 @@ public class PreviewProjectHandler {
         return toolWindow != null ? toolWindow.getReady(this) : ActionCallback.DONE;
     }
 
-    public synchronized void closePreview() {
+    public void closePreview() {
         if (myPreviewFile != null) {
             VirtualFile closingPreviewFile = myPreviewFile;
             myPreviewFile = null;
@@ -146,7 +138,7 @@ public class PreviewProjectHandler {
         }
     }
 
-    public synchronized VirtualFile createAndSetPreviewFile(VirtualFile file) {
+    public VirtualFile createAndSetPreviewFile(VirtualFile file) {
         if (myPreviewFile != null && myPreviewFile.getSource().equals(file)) {
             return myPreviewFile;
         }

@@ -39,7 +39,8 @@ public class PreviewVirtualFile extends VirtualFile {
     @NotNull
     @Override
     public String getPath() {
-        return getSource().getPath();
+        // TODO: to avoid further interaction with this dummy file, provide a non existing path - can do?
+        return "#...#";
     }
 
     @Override
