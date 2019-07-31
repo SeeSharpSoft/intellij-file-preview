@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -29,7 +30,6 @@ public class PreviewProjectHandler {
     private final TreeSelectionListener myTreeSelectionListener = treeSelectionEvent -> {
         Component tree = (Component) treeSelectionEvent.getSource();
         ApplicationManager.getApplication().invokeLater(() -> {
-            closePreview();
             openPreviewOrEditor(tree);
         });
     };
@@ -38,8 +38,13 @@ public class PreviewProjectHandler {
         @Override
         public void fileOpenedSync(@NotNull FileEditorManager source, @NotNull VirtualFile file,
                                    @NotNull Pair<FileEditor[], FileEditorProvider[]> editors) {
-            if (!(file instanceof PreviewVirtualFile)) {
-                closePreview();
+
+        }
+
+        @Override
+        public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+            if (file instanceof PreviewVirtualFile) {
+                ApplicationManager.getApplication().invokeLater(() -> EditorHistoryManager.getInstance(myProject).removeFile(file));
             }
         }
 
@@ -48,6 +53,19 @@ public class PreviewProjectHandler {
             if (!(event.getNewProvider() instanceof PreviewEditorProvider)) {
                 closePreview();
             }
+        }
+    };
+
+    private final FileEditorManagerListener.Before myFileEditorManagerBeforeListener = new FileEditorManagerListener.Before() {
+        @Override
+        public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+            if (!(file instanceof PreviewVirtualFile) || !file.equals(myPreviewFile)) {
+                closePreview();
+                if (file instanceof PreviewVirtualFile) {
+                    myPreviewFile = (PreviewVirtualFile) file;
+                }
+            }
+
         }
     };
 
@@ -73,6 +91,7 @@ public class PreviewProjectHandler {
 
         viewPane.getTree().addTreeSelectionListener(myTreeSelectionListener);
         messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myFileEditorManagerListener);
+        messageBusConnection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, myFileEditorManagerBeforeListener);
         return true;
     }
 
@@ -85,6 +104,12 @@ public class PreviewProjectHandler {
         if (viewPane != null) {
             viewPane.getTree().removeTreeSelectionListener(myTreeSelectionListener);
         }
+
+        EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(myProject);
+        editorHistoryManager.getFileList()
+                .stream()
+                .filter(file -> file instanceof PreviewVirtualFile)
+                .forEach(file -> editorHistoryManager.removeFile(file));
 
         myProject = null;
     }
@@ -122,10 +147,9 @@ public class PreviewProjectHandler {
     }
 
     public synchronized VirtualFile createAndSetPreviewFile(VirtualFile file) {
-        if (myPreviewFile == null) {
-            myPreviewFile = new PreviewVirtualFile(file);
+        if (myPreviewFile != null && myPreviewFile.getSource().equals(file)) {
             return myPreviewFile;
         }
-        return null;
+        return new PreviewVirtualFile(file);
     }
 }
