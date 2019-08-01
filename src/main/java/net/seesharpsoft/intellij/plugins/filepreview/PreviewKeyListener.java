@@ -37,6 +37,9 @@ public class PreviewKeyListener implements KeyListener {
                     });
                 }
                 break;
+            default:
+                // ignore
+                break;
         }
     }
 

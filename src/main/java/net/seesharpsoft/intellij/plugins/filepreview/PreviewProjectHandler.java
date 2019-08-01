@@ -180,7 +180,7 @@ public class PreviewProjectHandler {
         return caretsAndSelections;
     }
 
-    private void openFileEditorsWithCaretsAndSelections(final VirtualFile file, final List<CaretState>[] caretsAndSelections) {
+    private void openFileEditorsWithCaretsAndSelections(final VirtualFile file, final List<CaretState>... caretsAndSelections) {
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         final FileEditor[] targetFileEditors = fileEditorManager.openFile(file, true);
         for (int i = 0; i < caretsAndSelections.length && i < targetFileEditors.length; ++i) {

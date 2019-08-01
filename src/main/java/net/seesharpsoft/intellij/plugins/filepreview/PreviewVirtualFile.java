@@ -1,7 +1,6 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import net.seesharpsoft.common.io.DummyOutputStream;
