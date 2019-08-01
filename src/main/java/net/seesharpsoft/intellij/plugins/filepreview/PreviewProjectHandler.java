@@ -8,7 +8,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -19,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.function.Consumer;
 
@@ -28,55 +29,25 @@ public class PreviewProjectHandler {
     private Project myProject;
     private PreviewVirtualFile myPreviewFile;
     private AbstractProjectViewPane myProjectViewPane;
+    private final KeyListener myKeyListener;
 
     private final TreeSelectionListener myTreeSelectionListener = treeSelectionEvent -> {
-        openPreviewOrEditor();
-    };
-
-    private final KeyListener myKeyListener = new KeyListener() {
-        @Override
-        public void keyTyped(KeyEvent e) {
-            switch (e.getKeyCode()) {
-            }
-        }
-
-        @Override
-        public void keyPressed(KeyEvent e) {
-            switch (e.getKeyCode()) {
-                case KeyEvent.VK_ESCAPE:
-                    consumeSelectedFile((Component) e.getSource(), file -> {
-                        closeFileEditor(file);
-                    });
-                    break;
-                case KeyEvent.VK_SPACE:
-                    openPreviewOrEditor();
-                    break;
-                case KeyEvent.VK_TAB:
-                    consumeSelectedFile((Component) e.getSource(), file -> {
-                        focusFile(file);
-                    });
-                    break;
-            }
-        }
-
-        @Override
-        public void keyReleased(KeyEvent e) {
-            switch (e.getKeyCode()) {
-            }
-        }
+        consumeSelectedFile((Component) treeSelectionEvent.getSource(), file -> {
+            openPreviewOrEditor(file);
+        });
     };
 
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
         @Override
         public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
             if (file instanceof PreviewVirtualFile) {
-                ApplicationManager.getApplication().invokeLater(() -> myProjectViewPane.getTree().grabFocus());
+                runSafe(() -> myProjectViewPane.getTree().grabFocus());
             }
         }
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            ApplicationManager.getApplication().invokeLater(() -> myProjectViewPane.getTree().grabFocus());
+            runSafe(() -> myProjectViewPane.getTree().grabFocus());
         }
 
         @Override
@@ -107,6 +78,10 @@ public class PreviewProjectHandler {
             return previewProjectHandler;
         }
         return null;
+    }
+
+    public PreviewProjectHandler() {
+        myKeyListener = new PreviewKeyListener(this);
     }
 
     public boolean init(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
@@ -142,24 +117,21 @@ public class PreviewProjectHandler {
         myProject = null;
     }
 
-    public void openPreviewOrEditor() {
-        final Component tree = myProjectViewPane.getTree();
-        consumeSelectedFile(tree, file -> {
-            if (file == null || file.isDirectory() || !file.isValid()) {
-                if (PreviewSettings.getInstance().isPreviewClosedOnEmptySelection()) {
-                    closePreview();
-                }
-                return;
+    public void openPreviewOrEditor(VirtualFile file) {
+        if (!isValid() || file == null || file.isDirectory() || !file.isValid()) {
+            if (PreviewSettings.getInstance().isPreviewClosedOnEmptySelection()) {
+                closePreview();
             }
-            FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-            final VirtualFile fileToOpen = !fileEditorManager.isFileOpen(file) ? createAndSetPreviewFile(file) : file;
-            if (fileToOpen != null) {
-                ApplicationManager.getApplication().invokeLater(() -> fileEditorManager.openFile(fileToOpen, false));
-            }
-        });
+            return;
+        }
+        FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+        final VirtualFile fileToOpen = !fileEditorManager.isFileOpen(file) ? createAndSetPreviewFile(file) : file;
+        if (fileToOpen != null) {
+            runSafe(() -> fileEditorManager.openFile(fileToOpen, false));
+        }
     }
 
-    protected void consumeSelectedFile(final Component tree, Consumer<VirtualFile> consumer) {
+    public void consumeSelectedFile(final Component tree, Consumer<VirtualFile> consumer) {
         DataContext dataContext = DataManager.getInstance().getDataContext(tree);
         getReady(dataContext).doWhenDone(() -> TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
             DataContext context = DataManager.getInstance().getDataContext(tree);
@@ -174,39 +146,59 @@ public class PreviewProjectHandler {
     }
 
     public void closeFileEditor(VirtualFile file) {
-        if (file == null) {
+        if (!isValid() || file == null) {
             return;
         }
         if (myPreviewFile != null && myPreviewFile.getSource().equals(file)) {
             closePreview();
         } else {
             FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
-            ApplicationManager.getApplication().invokeLater(() -> fileEditorManager.closeFile(file, false, true));
+            runSafe(() -> fileEditorManager.closeFile(file, false, true));
         }
     }
 
     public void closePreview() {
-        if (myPreviewFile != null && !myProject.isDisposed()) {
-            final VirtualFile closingPreviewFile = myPreviewFile;
-            myPreviewFile = null;
-            FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
-            ApplicationManager.getApplication().invokeLater(() -> fileEditorManager.closeFile(closingPreviewFile, false, true));
+        if (!isValid() || myPreviewFile == null) {
+            return;
         }
+
+        final VirtualFile closingPreviewFile = myPreviewFile;
+        myPreviewFile = null;
+        FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
+        runSafe(() -> fileEditorManager.closeFile(closingPreviewFile, false, true));
     }
 
     public void focusFile(VirtualFile file) {
+        if (!isValid()) {
+            return;
+        }
         final VirtualFile fileToFocus = myPreviewFile != null && myPreviewFile.getSource().equals(file) ? myPreviewFile : file;
         FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
         if (fileToFocus == null || !fileEditorManager.isFileOpen(fileToFocus)) {
             return;
         }
-        ApplicationManager.getApplication().invokeLater(() -> fileEditorManager.openFile(fileToFocus, true));
     }
 
     public VirtualFile createAndSetPreviewFile(VirtualFile file) {
+        if (!isValid()) {
+            return null;
+        }
+
         if (myPreviewFile != null && myPreviewFile.getSource().equals(file)) {
             return myPreviewFile;
         }
         return new PreviewVirtualFile(file);
+    }
+
+    public void runSafe(Runnable runnable) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+            if (isValid()) {
+                runnable.run();
+            }
+        });
+    }
+
+    public boolean isValid() {
+        return myProject != null && !myProject.isDisposed();
     }
 }
