@@ -22,6 +22,7 @@ public final class PreviewSettings  implements PersistentStateComponent<PreviewS
     static final class OptionSet {
         boolean CLOSE_PREVIEW_ON_EMPTY_SELECTION = false;
         boolean QUICK_NAVIGATION_KEY_LISTENER_ENABLED = false;
+        boolean PROJECT_VIEW_FOCUS_SUPPORT = true;
     }
 
     private OptionSet myOptions = new OptionSet();
@@ -66,5 +67,12 @@ public final class PreviewSettings  implements PersistentStateComponent<PreviewS
     }
     public void setQuickNavigationKeyListenerEnabled(boolean quickNavigationKeyListenerEnabled) {
         getState().QUICK_NAVIGATION_KEY_LISTENER_ENABLED = quickNavigationKeyListenerEnabled;
+    }
+
+    public boolean isProjectViewFocusSupport() {
+        return getState().PROJECT_VIEW_FOCUS_SUPPORT;
+    }
+    public void setProjectViewFocusSupport(boolean projectViewFocusSupport) {
+        getState().PROJECT_VIEW_FOCUS_SUPPORT = projectViewFocusSupport;
     }
 }

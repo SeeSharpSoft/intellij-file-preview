@@ -40,14 +40,16 @@ public class PreviewProjectHandler {
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
         @Override
         public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            if (file instanceof PreviewVirtualFile) {
+            if (PreviewSettings.getInstance().isProjectViewFocusSupport() && file instanceof PreviewVirtualFile) {
                 runSafe(() -> myProjectViewPane.getTree().grabFocus());
             }
         }
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            runSafe(() -> myProjectViewPane.getTree().grabFocus());
+            if (PreviewSettings.getInstance().isProjectViewFocusSupport()) {
+                runSafe(() -> myProjectViewPane.getTree().grabFocus());
+            }
         }
 
         @Override

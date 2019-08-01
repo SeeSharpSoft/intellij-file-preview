@@ -14,6 +14,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     private JCheckBox cbClosePreviewOnEmptySelection;
     private JPanel mainPanel;
     private JCheckBox cbKeyListenerEnabled;
+    private JCheckBox cbProjectViewFocusSupport;
 
     @NotNull
     @Override
@@ -42,7 +43,8 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     public boolean isModified() {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         return isModified(cbClosePreviewOnEmptySelection, previewSettings.isPreviewClosedOnEmptySelection()) ||
-                isModified(cbKeyListenerEnabled, previewSettings.isQuickNavigationKeyListenerEnabled());
+                isModified(cbKeyListenerEnabled, previewSettings.isQuickNavigationKeyListenerEnabled()) ||
+                isModified(cbProjectViewFocusSupport, previewSettings.isProjectViewFocusSupport());
     }
 
     @Override
@@ -50,6 +52,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         cbClosePreviewOnEmptySelection.setSelected(previewSettings.isPreviewClosedOnEmptySelection());
         cbKeyListenerEnabled.setSelected(previewSettings.isQuickNavigationKeyListenerEnabled());
+        cbProjectViewFocusSupport.setSelected(previewSettings.isProjectViewFocusSupport());
     }
 
     @Override
@@ -57,5 +60,6 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         previewSettings.setPreviewClosedOnEmptySelection(cbClosePreviewOnEmptySelection.isSelected());
         previewSettings.setQuickNavigationKeyListenerEnabled(cbKeyListenerEnabled.isSelected());
+        previewSettings.setProjectViewFocusSupport(cbProjectViewFocusSupport.isSelected());
     }
 }

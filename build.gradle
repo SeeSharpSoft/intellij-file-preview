@@ -28,6 +28,7 @@ patchPluginXml {
     changeNotes """
 <pre style="font-family: sans-serif">
 NEW: quick navigation key listener (e.g. ESC to close editor, TAB to focus editor, ...)
+NEW: keeping focus on Project View
 </pre>
       """
 }
