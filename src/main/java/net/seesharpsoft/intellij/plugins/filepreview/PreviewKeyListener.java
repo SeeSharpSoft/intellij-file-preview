@@ -21,7 +21,9 @@ public class PreviewKeyListener implements KeyListener {
     public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_ESCAPE:
-                myPreviewProjectHandler.closeCurrentFileEditor();
+                if (PreviewSettings.getInstance().isQuickNavigationKeyListenerEnabled()) {
+                    myPreviewProjectHandler.closeCurrentFileEditor();
+                }
                 break;
             case KeyEvent.VK_SPACE:
                 myPreviewProjectHandler.consumeSelectedFile((Component)e.getSource(), file -> {
@@ -29,9 +31,11 @@ public class PreviewKeyListener implements KeyListener {
                 });
                 break;
             case KeyEvent.VK_TAB:
-                myPreviewProjectHandler.consumeSelectedFile((Component) e.getSource(), file -> {
-                    myPreviewProjectHandler.focusFile(file);
-                });
+                if (PreviewSettings.getInstance().isQuickNavigationKeyListenerEnabled()) {
+                    myPreviewProjectHandler.consumeSelectedFile((Component) e.getSource(), file -> {
+                        myPreviewProjectHandler.focusFile(file);
+                    });
+                }
                 break;
         }
     }

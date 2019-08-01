@@ -32,9 +32,20 @@ public class PreviewProjectHandler {
     private final KeyListener myKeyListener;
 
     private final TreeSelectionListener myTreeSelectionListener = treeSelectionEvent -> {
-        consumeSelectedFile((Component) treeSelectionEvent.getSource(), file -> {
-            openPreviewOrEditor(file);
-        });
+        switch (PreviewSettings.getInstance().getPreviewBehavior()) {
+            case PREVIEW_BY_DEFAULT:
+                consumeSelectedFile((Component) treeSelectionEvent.getSource(), file -> {
+                    openPreviewOrEditor(file);
+                });
+                break;
+            case EXPLICIT_PREVIEW:
+                consumeSelectedFile((Component) treeSelectionEvent.getSource(), file -> {
+                    focusFile(file);
+                });
+                break;
+            default:
+                throw new UnsupportedOperationException(String.format("case '%s' not handled", PreviewSettings.getInstance().getPreviewBehavior()));
+        }
     };
 
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
@@ -97,10 +108,9 @@ public class PreviewProjectHandler {
         }
 
         myProjectViewPane.getTree().addTreeSelectionListener(myTreeSelectionListener);
-        if (PreviewSettings.getInstance().isQuickNavigationKeyListenerEnabled()) {
-            myProjectViewPane.getTree().setFocusTraversalKeysEnabled(false);
-            myProjectViewPane.getTree().addKeyListener(myKeyListener);
-        }
+        // required to support TAB key in listener - be aware of side effects...
+        myProjectViewPane.getTree().setFocusTraversalKeysEnabled(false);
+        myProjectViewPane.getTree().addKeyListener(myKeyListener);
         messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myFileEditorManagerListener);
         messageBusConnection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, myFileEditorManagerBeforeListener);
         return true;

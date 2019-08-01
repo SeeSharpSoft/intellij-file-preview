@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class PreviewSettingsEditor implements SearchableConfigurable {
     public static final String PREVIEW_SETTINGS_EDITOR_ID = "Preview.Settings.Editor";
@@ -15,6 +16,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     private JPanel mainPanel;
     private JCheckBox cbKeyListenerEnabled;
     private JCheckBox cbProjectViewFocusSupport;
+    private JComboBox sbPreviewBehavior;
 
     @NotNull
     @Override
@@ -44,7 +46,8 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         return isModified(cbClosePreviewOnEmptySelection, previewSettings.isPreviewClosedOnEmptySelection()) ||
                 isModified(cbKeyListenerEnabled, previewSettings.isQuickNavigationKeyListenerEnabled()) ||
-                isModified(cbProjectViewFocusSupport, previewSettings.isProjectViewFocusSupport());
+                isModified(cbProjectViewFocusSupport, previewSettings.isProjectViewFocusSupport()) ||
+                !Objects.equals(sbPreviewBehavior.getSelectedIndex(), previewSettings.getPreviewBehavior().ordinal());
     }
 
     @Override
@@ -53,6 +56,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         cbClosePreviewOnEmptySelection.setSelected(previewSettings.isPreviewClosedOnEmptySelection());
         cbKeyListenerEnabled.setSelected(previewSettings.isQuickNavigationKeyListenerEnabled());
         cbProjectViewFocusSupport.setSelected(previewSettings.isProjectViewFocusSupport());
+        sbPreviewBehavior.setSelectedIndex(previewSettings.getPreviewBehavior().ordinal());
     }
 
     @Override
@@ -61,5 +65,6 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         previewSettings.setPreviewClosedOnEmptySelection(cbClosePreviewOnEmptySelection.isSelected());
         previewSettings.setQuickNavigationKeyListenerEnabled(cbKeyListenerEnabled.isSelected());
         previewSettings.setProjectViewFocusSupport(cbProjectViewFocusSupport.isSelected());
+        previewSettings.setPreviewBehavior(PreviewSettings.PreviewBehavior.values()[sbPreviewBehavior.getSelectedIndex()]);
     }
 }

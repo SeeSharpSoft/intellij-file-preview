@@ -19,10 +19,16 @@ public final class PreviewSettings  implements PersistentStateComponent<PreviewS
 
     public static final String PREVIEW_SETTINGS_STORAGE_FILE = "QuickFilePreview.xml";
 
+    public enum PreviewBehavior {
+        PREVIEW_BY_DEFAULT,
+        EXPLICIT_PREVIEW
+    }
+
     static final class OptionSet {
         boolean CLOSE_PREVIEW_ON_EMPTY_SELECTION = false;
         boolean QUICK_NAVIGATION_KEY_LISTENER_ENABLED = false;
         boolean PROJECT_VIEW_FOCUS_SUPPORT = true;
+        PreviewBehavior PREVIEW_BEHAVIOR = PreviewBehavior.PREVIEW_BY_DEFAULT;
     }
 
     private OptionSet myOptions = new OptionSet();
@@ -74,5 +80,12 @@ public final class PreviewSettings  implements PersistentStateComponent<PreviewS
     }
     public void setProjectViewFocusSupport(boolean projectViewFocusSupport) {
         getState().PROJECT_VIEW_FOCUS_SUPPORT = projectViewFocusSupport;
+    }
+
+    public PreviewBehavior getPreviewBehavior() {
+        return getState().PREVIEW_BEHAVIOR;
+    }
+    public void setPreviewBehavior(PreviewBehavior previewBehavior) {
+        getState().PREVIEW_BEHAVIOR = previewBehavior;
     }
 }
