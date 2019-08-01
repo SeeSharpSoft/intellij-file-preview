@@ -21,9 +21,7 @@ public class PreviewKeyListener implements KeyListener {
     public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_ESCAPE:
-                myPreviewProjectHandler.consumeSelectedFile((Component) e.getSource(), file -> {
-                    myPreviewProjectHandler.closeFileEditor(file);
-                });
+                myPreviewProjectHandler.closeCurrentFileEditor();
                 break;
             case KeyEvent.VK_SPACE:
                 myPreviewProjectHandler.consumeSelectedFile((Component)e.getSource(), file -> {

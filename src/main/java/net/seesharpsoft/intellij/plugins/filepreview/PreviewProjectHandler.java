@@ -147,6 +147,15 @@ public class PreviewProjectHandler {
         return toolWindow != null ? toolWindow.getReady(this) : ActionCallback.DONE;
     }
 
+    public void closeCurrentFileEditor() {
+        if (!isValid()) {
+            return;
+        }
+
+        FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
+        closeFileEditor(fileEditorManager.getCurrentFile());
+    }
+
     public void closeFileEditor(VirtualFile file) {
         if (!isValid() || file == null) {
             return;
