@@ -8,9 +8,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.editor.CaretState;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyListener;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class PreviewProjectHandler {
@@ -40,7 +40,7 @@ public class PreviewProjectHandler {
                 break;
             case EXPLICIT_PREVIEW:
                 consumeSelectedFile((Component) treeSelectionEvent.getSource(), file -> {
-                    focusFile(file);
+                    focusFileEditor(file);
                 });
                 break;
             default:
@@ -77,7 +77,7 @@ public class PreviewProjectHandler {
             if (!(file instanceof PreviewVirtualFile) || !file.equals(myPreviewFile)) {
                 closePreview();
                 if (file instanceof PreviewVirtualFile) {
-                    myPreviewFile = (PreviewVirtualFile) file;
+                    initPreviewFile((PreviewVirtualFile) file);
                 }
             }
         }
@@ -113,6 +113,7 @@ public class PreviewProjectHandler {
         myProjectViewPane.getTree().addKeyListener(myKeyListener);
         messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myFileEditorManagerListener);
         messageBusConnection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, myFileEditorManagerBeforeListener);
+
         return true;
     }
 
@@ -141,6 +142,47 @@ public class PreviewProjectHandler {
         if (fileToOpen != null) {
             runSafe(() -> fileEditorManager.openFile(fileToOpen, false));
         }
+    }
+
+    public boolean isPreview(VirtualFile file) {
+        if (!isValid() || file == null || myPreviewFile == null) {
+            return false;
+        }
+        return myPreviewFile.equals(file) || myPreviewFile.getSource().equals(file);
+    }
+
+    public void openFileEditor(final VirtualFile file) {
+        if (!isValid() || file == null) {
+            return;
+        }
+        final VirtualFile fileToOpen;
+        if (file instanceof PreviewVirtualFile) {
+            fileToOpen = ((PreviewVirtualFile) file).getSource();
+        } else {
+            fileToOpen = file;
+        }
+        ApplicationManager.getApplication().invokeLater(() -> {
+            final List<CaretState> caretsAndSelections;
+            FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+            if (isPreview(file)) {
+                FileEditor fileEditor = fileEditorManager.getSelectedEditor(file);
+                if (fileEditor instanceof TextEditor) {
+                    caretsAndSelections = ((TextEditor) fileEditor).getEditor().getCaretModel().getCaretsAndSelections();
+                } else {
+                    caretsAndSelections = null;
+                }
+                closePreview();
+            } else {
+                caretsAndSelections = null;
+            }
+
+            runSafe(() -> {
+                final FileEditor[] fileEditors = fileEditorManager.openFile(fileToOpen, true);
+                if (fileEditors.length > 0 && fileEditors[0] instanceof TextEditor && caretsAndSelections != null) {
+                    ((TextEditor) fileEditors[0]).getEditor().getCaretModel().setCaretsAndSelections(caretsAndSelections, false);
+                }
+            });
+        });
     }
 
     public void consumeSelectedFile(final Component tree, Consumer<VirtualFile> consumer) {
@@ -183,14 +225,15 @@ public class PreviewProjectHandler {
             return;
         }
 
-        final VirtualFile closingPreviewFile = myPreviewFile;
+        final PreviewVirtualFile closingPreviewFile = myPreviewFile;
         myPreviewFile = null;
+        disposePreviewFile(closingPreviewFile);
         FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
         runSafe(() -> fileEditorManager.closeFile(closingPreviewFile, false, true));
     }
 
-    public void focusFile(VirtualFile file) {
-        if (!isValid()) {
+    public void focusFileEditor(VirtualFile file) {
+        if (!isValid() || file == null) {
             return;
         }
         final VirtualFile fileToFocus = myPreviewFile != null && myPreviewFile.getSource().equals(file) ? myPreviewFile : file;
@@ -198,6 +241,7 @@ public class PreviewProjectHandler {
         if (fileToFocus == null || !fileEditorManager.isFileOpen(fileToFocus)) {
             return;
         }
+        runSafe(() -> fileEditorManager.openFile(file, true));
     }
 
     public VirtualFile createAndSetPreviewFile(VirtualFile file) {
@@ -221,5 +265,22 @@ public class PreviewProjectHandler {
 
     public boolean isValid() {
         return myProject != null && !myProject.isDisposed();
+    }
+
+    protected void initPreviewFile(PreviewVirtualFile previewFile) {
+        PreviewFileListener listener = new PreviewFileListener(this, previewFile);
+        previewFile.putUserData(PreviewFileListener.PREVIEW_FILE_LISTENER, listener);
+        FileDocumentManager.getInstance().getDocument(previewFile.getSource()).addDocumentListener(listener);
+        myPreviewFile = previewFile;
+    }
+
+    protected void disposePreviewFile(PreviewVirtualFile previewFile) {
+        PreviewFileListener listener = previewFile.getUserData(PreviewFileListener.PREVIEW_FILE_LISTENER);
+
+        if (listener == null) {
+            return;
+        }
+
+        FileDocumentManager.getInstance().getDocument(previewFile.getSource()).removeDocumentListener(listener);
     }
 }

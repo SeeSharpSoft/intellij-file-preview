@@ -33,7 +33,7 @@ public class PreviewKeyListener implements KeyListener {
             case KeyEvent.VK_TAB:
                 if (PreviewSettings.getInstance().isQuickNavigationKeyListenerEnabled()) {
                     myPreviewProjectHandler.consumeSelectedFile((Component) e.getSource(), file -> {
-                        myPreviewProjectHandler.focusFile(file);
+                        myPreviewProjectHandler.focusFileEditor(file);
                     });
                 }
                 break;
