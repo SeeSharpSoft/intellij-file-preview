@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.CaretState;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -52,14 +53,14 @@ public class PreviewProjectHandler {
         @Override
         public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
             if (PreviewSettings.getInstance().isProjectViewFocusSupport() && file instanceof PreviewVirtualFile) {
-                runSafe(() -> myProjectViewPane.getTree().grabFocus());
+                invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
             }
         }
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
             if (PreviewSettings.getInstance().isProjectViewFocusSupport()) {
-                runSafe(() -> myProjectViewPane.getTree().grabFocus());
+                invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
             }
         }
 
@@ -140,11 +141,11 @@ public class PreviewProjectHandler {
         FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         final VirtualFile fileToOpen = !fileEditorManager.isFileOpen(file) ? createAndSetPreviewFile(file) : file;
         if (fileToOpen != null) {
-            runSafe(() -> fileEditorManager.openFile(fileToOpen, false));
+            invokeSafe(() -> fileEditorManager.openFile(fileToOpen, false));
         }
     }
 
-    public boolean isPreview(VirtualFile file) {
+    public boolean isCurrentlyPreviewed(VirtualFile file) {
         if (!isValid() || file == null || myPreviewFile == null) {
             return false;
         }
@@ -155,41 +156,50 @@ public class PreviewProjectHandler {
         if (!isValid() || file == null) {
             return;
         }
-        final VirtualFile fileToOpen;
-        if (file instanceof PreviewVirtualFile) {
-            fileToOpen = ((PreviewVirtualFile) file).getSource();
-        } else {
-            fileToOpen = file;
-        }
-        ApplicationManager.getApplication().invokeLater(() -> {
-            final List<CaretState> caretsAndSelections;
-            FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-            if (isPreview(file)) {
-                FileEditor fileEditor = fileEditorManager.getSelectedEditor(file);
-                if (fileEditor instanceof TextEditor) {
-                    caretsAndSelections = ((TextEditor) fileEditor).getEditor().getCaretModel().getCaretsAndSelections();
-                } else {
-                    caretsAndSelections = null;
-                }
-                closePreview();
-            } else {
-                caretsAndSelections = null;
-            }
+        ApplicationManager.getApplication().invokeLater(() -> openFileEditorWithCaretsAndSelections(file));
+    }
 
-            runSafe(() -> {
-                final FileEditor[] fileEditors = fileEditorManager.openFile(fileToOpen, true);
-                if (fileEditors.length > 0 && fileEditors[0] instanceof TextEditor && caretsAndSelections != null) {
-                    ((TextEditor) fileEditors[0]).getEditor().getCaretModel().setCaretsAndSelections(caretsAndSelections, false);
-                }
-            });
-        });
+    private void openFileEditorWithCaretsAndSelections(final VirtualFile file) {
+        final VirtualFile fileToOpen = file instanceof PreviewVirtualFile ? ((PreviewVirtualFile)file).getSource() : file;
+        final List<CaretState>[] caretsAndSelections = getCaretsAndSelections(file);
+        invokeSafe(() -> openFileEditorsWithCaretsAndSelections(fileToOpen, caretsAndSelections));
+    }
+
+    @NotNull
+    private List<CaretState>[] getCaretsAndSelections(final VirtualFile file) {
+        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+        final FileEditor[] sourceFileEditors = fileEditorManager.getEditors(file);
+        final List<CaretState>[] caretsAndSelections = new List[sourceFileEditors.length];
+        for (int i = 0; i < sourceFileEditors.length; ++i) {
+            final FileEditor fileEditor = sourceFileEditors[i];
+            if (fileEditor instanceof TextEditor) {
+                caretsAndSelections[i] = ((TextEditor) fileEditor).getEditor().getCaretModel().getCaretsAndSelections();
+            }
+        }
+        closePreview();
+        return caretsAndSelections;
+    }
+
+    private void openFileEditorsWithCaretsAndSelections(final VirtualFile file, final List<CaretState>[] caretsAndSelections) {
+        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+        final FileEditor[] targetFileEditors = fileEditorManager.openFile(file, true);
+        for (int i = 0; i < caretsAndSelections.length && i < targetFileEditors.length; ++i) {
+            final List<CaretState> caretsAndSelectionEntry = caretsAndSelections[i];
+            if (caretsAndSelectionEntry == null) {
+                continue;
+            }
+            final FileEditor fileEditor = targetFileEditors[i];
+            if (fileEditor instanceof TextEditor) {
+                ((TextEditor) fileEditor).getEditor().getCaretModel().setCaretsAndSelections(caretsAndSelectionEntry, false);
+            }
+        }
     }
 
     public void consumeSelectedFile(final Component tree, Consumer<VirtualFile> consumer) {
         DataContext dataContext = DataManager.getInstance().getDataContext(tree);
         getReady(dataContext).doWhenDone(() -> TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
             DataContext context = DataManager.getInstance().getDataContext(tree);
-            VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
+            final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
             consumer.accept(file);
         }));
     }
@@ -216,7 +226,7 @@ public class PreviewProjectHandler {
             closePreview();
         } else {
             FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
-            runSafe(() -> fileEditorManager.closeFile(file, false, true));
+            invokeSafe(() -> fileEditorManager.closeFile(file, false, true));
         }
     }
 
@@ -229,7 +239,7 @@ public class PreviewProjectHandler {
         myPreviewFile = null;
         disposePreviewFile(closingPreviewFile);
         FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
-        runSafe(() -> fileEditorManager.closeFile(closingPreviewFile, false, true));
+        invokeSafeAndWait(() -> fileEditorManager.closeFile(closingPreviewFile, false, true));
     }
 
     public void focusFileEditor(VirtualFile file) {
@@ -241,7 +251,7 @@ public class PreviewProjectHandler {
         if (fileToFocus == null || !fileEditorManager.isFileOpen(fileToFocus)) {
             return;
         }
-        runSafe(() -> fileEditorManager.openFile(file, true));
+        invokeSafe(() -> fileEditorManager.openFile(file, true));
     }
 
     public VirtualFile createAndSetPreviewFile(VirtualFile file) {
@@ -255,7 +265,15 @@ public class PreviewProjectHandler {
         return new PreviewVirtualFile(file);
     }
 
-    public void runSafe(Runnable runnable) {
+    public void invokeSafeAndWait(Runnable runnable) {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+            if (isValid()) {
+                runnable.run();
+            }
+        });
+    }
+
+    public void invokeSafe(Runnable runnable) {
         ApplicationManager.getApplication().invokeLater(() -> {
             if (isValid()) {
                 runnable.run();
@@ -268,10 +286,15 @@ public class PreviewProjectHandler {
     }
 
     protected void initPreviewFile(PreviewVirtualFile previewFile) {
-        PreviewFileListener listener = new PreviewFileListener(this, previewFile);
-        previewFile.putUserData(PreviewFileListener.PREVIEW_FILE_LISTENER, listener);
-        FileDocumentManager.getInstance().getDocument(previewFile.getSource()).addDocumentListener(listener);
         myPreviewFile = previewFile;
+        invokeSafe(() -> {
+            Document document = FileDocumentManager.getInstance().getDocument(previewFile.getSource());
+            if (document != null) {
+                PreviewFileListener listener = new PreviewFileListener(this, previewFile);
+                previewFile.putUserData(PreviewFileListener.PREVIEW_FILE_LISTENER, listener);
+                document.addDocumentListener(listener);
+            }
+        });
     }
 
     protected void disposePreviewFile(PreviewVirtualFile previewFile) {
