@@ -28,6 +28,7 @@ public final class PreviewSettings  implements PersistentStateComponent<PreviewS
         boolean CLOSE_PREVIEW_ON_EMPTY_SELECTION = false;
         boolean QUICK_NAVIGATION_KEY_LISTENER_ENABLED = false;
         boolean PROJECT_VIEW_FOCUS_SUPPORT = true;
+        boolean OPEN_EDITOR_ON_EDIT_PREVIEW = true;
         PreviewBehavior PREVIEW_BEHAVIOR = PreviewBehavior.PREVIEW_BY_DEFAULT;
     }
 
@@ -81,6 +82,14 @@ public final class PreviewSettings  implements PersistentStateComponent<PreviewS
     public void setProjectViewFocusSupport(boolean projectViewFocusSupport) {
         getState().PROJECT_VIEW_FOCUS_SUPPORT = projectViewFocusSupport;
     }
+
+    public boolean isOpenEditorOnEditPreview() {
+        return getState().OPEN_EDITOR_ON_EDIT_PREVIEW;
+    }
+    public void setOpenEditorOnEditPreview(boolean openEditorOnEditPreview) {
+        getState().OPEN_EDITOR_ON_EDIT_PREVIEW = openEditorOnEditPreview;
+    }
+
 
     public PreviewBehavior getPreviewBehavior() {
         return getState().PREVIEW_BEHAVIOR;

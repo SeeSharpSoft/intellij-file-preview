@@ -16,8 +16,8 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.MessageBusConnection;
-import net.seesharpsoft.intellij.editor.EditorStateSynchronizer;
-import net.seesharpsoft.intellij.editor.EditorStateSynchronizerFactory;
+import net.seesharpsoft.intellij.editor.EditorSnapshot;
+import net.seesharpsoft.intellij.editor.EditorSnapshotFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeSelectionListener;
@@ -158,41 +158,43 @@ public class PreviewProjectHandler {
         if (!isValid() || file == null) {
             return;
         }
-        ApplicationManager.getApplication().invokeLater(() -> openFileEditorWithCurrentEditorState(file));
+        ApplicationManager.getApplication().invokeLater(() -> openFileEditorWithPreviewSnapshot(file));
     }
 
-    private void openFileEditorWithCurrentEditorState(final VirtualFile file) {
-        final VirtualFile fileToOpen = file instanceof PreviewVirtualFile ? ((PreviewVirtualFile)file).getSource() : file;
-        final List<EditorStateSynchronizer> editorStateSynchronizers = getEditorStateSynchronizers(file);
-        invokeSafe(() -> openFileEditorWithCurrentEditorState(fileToOpen, editorStateSynchronizers));
+    private void openFileEditorWithPreviewSnapshot(final VirtualFile file) {
+        final VirtualFile fileToOpen = file instanceof PreviewVirtualFile ? ((PreviewVirtualFile) file).getSource() : file;
+        final List<EditorSnapshot> editorSnapshots = getEditorsSnapshots(file);
+        if (isCurrentlyPreviewed(file)) {
+            closePreview();
+        }
+        invokeSafe(() -> openFileEditorWithPreviewSnapshot(fileToOpen, editorSnapshots));
     }
 
-    private void openFileEditorWithCurrentEditorState(final VirtualFile file, final List<EditorStateSynchronizer> editorStateSynchronizers) {
+    private void openFileEditorWithPreviewSnapshot(final VirtualFile file, final List<EditorSnapshot> editorSnapshots) {
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         final FileEditor[] targetFileEditors = fileEditorManager.openFile(file, true);
         for (FileEditor fileEditor : targetFileEditors) {
-            EditorStateSynchronizer synchronizer = editorStateSynchronizers.stream()
-                            .filter(editorStateSynchronizer -> editorStateSynchronizer.accepts(fileEditor))
-                            .findFirst().orElse(null);
-            if (synchronizer != null) {
-                synchronizer.applyState(fileEditor);
+            EditorSnapshot editorSnapshot = editorSnapshots.stream()
+                    .filter(snapshot -> snapshot.accepts(fileEditor))
+                    .findFirst().orElse(null);
+            if (editorSnapshot != null) {
+                editorSnapshot.apply(fileEditor);
             }
         }
     }
 
     @NotNull
-    private List<EditorStateSynchronizer> getEditorStateSynchronizers(final VirtualFile file) {
+    private List<EditorSnapshot> getEditorsSnapshots(final VirtualFile file) {
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         final FileEditor[] sourceFileEditors = fileEditorManager.getEditors(file);
-        final List<EditorStateSynchronizer> editorStateSynchronizers = new ArrayList<>();
+        final List<EditorSnapshot> editorSnapshots = new ArrayList<>();
         for (FileEditor fileEditor : sourceFileEditors) {
-            EditorStateSynchronizer synchronizer = EditorStateSynchronizerFactory.getInstance().create(fileEditor);
-            if (synchronizer != null) {
-                editorStateSynchronizers.add(synchronizer);
+            EditorSnapshot editorSnapshot = EditorSnapshotFactory.getInstance().create(fileEditor);
+            if (editorSnapshot != null) {
+                editorSnapshots.add(editorSnapshot);
             }
         }
-        closePreview();
-        return editorStateSynchronizers;
+        return editorSnapshots;
     }
 
     public void consumeSelectedFile(final Component tree, Consumer<VirtualFile> consumer) {
@@ -287,6 +289,10 @@ public class PreviewProjectHandler {
 
     protected void initPreviewFile(PreviewVirtualFile previewFile) {
         myPreviewFile = previewFile;
+        if (!PreviewSettings.getInstance().isOpenEditorOnEditPreview()) {
+            return;
+        }
+
         invokeSafe(() -> {
             Document document = FileDocumentManager.getInstance().getDocument(previewFile.getSource());
             if (document != null) {

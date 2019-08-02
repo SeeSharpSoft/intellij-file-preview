@@ -17,6 +17,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     private JCheckBox cbKeyListenerEnabled;
     private JCheckBox cbProjectViewFocusSupport;
     private JComboBox sbPreviewBehavior;
+    private JCheckBox cbOpenEditorOnEditPreview;
 
     @NotNull
     @Override
@@ -47,6 +48,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         return isModified(cbClosePreviewOnEmptySelection, previewSettings.isPreviewClosedOnEmptySelection()) ||
                 isModified(cbKeyListenerEnabled, previewSettings.isQuickNavigationKeyListenerEnabled()) ||
                 isModified(cbProjectViewFocusSupport, previewSettings.isProjectViewFocusSupport()) ||
+                isModified(cbOpenEditorOnEditPreview, previewSettings.isOpenEditorOnEditPreview()) ||
                 !Objects.equals(sbPreviewBehavior.getSelectedIndex(), previewSettings.getPreviewBehavior().ordinal());
     }
 
@@ -56,6 +58,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         cbClosePreviewOnEmptySelection.setSelected(previewSettings.isPreviewClosedOnEmptySelection());
         cbKeyListenerEnabled.setSelected(previewSettings.isQuickNavigationKeyListenerEnabled());
         cbProjectViewFocusSupport.setSelected(previewSettings.isProjectViewFocusSupport());
+        cbOpenEditorOnEditPreview.setSelected(previewSettings.isOpenEditorOnEditPreview());
         sbPreviewBehavior.setSelectedIndex(previewSettings.getPreviewBehavior().ordinal());
     }
 
@@ -65,6 +68,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         previewSettings.setPreviewClosedOnEmptySelection(cbClosePreviewOnEmptySelection.isSelected());
         previewSettings.setQuickNavigationKeyListenerEnabled(cbKeyListenerEnabled.isSelected());
         previewSettings.setProjectViewFocusSupport(cbProjectViewFocusSupport.isSelected());
+        previewSettings.setOpenEditorOnEditPreview(cbOpenEditorOnEditPreview.isSelected());
         previewSettings.setPreviewBehavior(PreviewSettings.PreviewBehavior.values()[sbPreviewBehavior.getSelectedIndex()]);
     }
 }
