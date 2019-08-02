@@ -18,6 +18,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     private JCheckBox cbProjectViewFocusSupport;
     private JComboBox sbPreviewBehavior;
     private JCheckBox cbOpenEditorOnEditPreview;
+    private JCheckBox cbPreviewClosedOnTabChange;
 
     @NotNull
     @Override
@@ -46,6 +47,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     public boolean isModified() {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         return isModified(cbClosePreviewOnEmptySelection, previewSettings.isPreviewClosedOnEmptySelection()) ||
+                isModified(cbPreviewClosedOnTabChange, previewSettings.isPreviewClosedOnTabChange()) ||
                 isModified(cbKeyListenerEnabled, previewSettings.isQuickNavigationKeyListenerEnabled()) ||
                 isModified(cbProjectViewFocusSupport, previewSettings.isProjectViewFocusSupport()) ||
                 isModified(cbOpenEditorOnEditPreview, previewSettings.isOpenEditorOnEditPreview()) ||
@@ -56,6 +58,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     public void reset() {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         cbClosePreviewOnEmptySelection.setSelected(previewSettings.isPreviewClosedOnEmptySelection());
+        cbPreviewClosedOnTabChange.setSelected(previewSettings.isPreviewClosedOnTabChange());
         cbKeyListenerEnabled.setSelected(previewSettings.isQuickNavigationKeyListenerEnabled());
         cbProjectViewFocusSupport.setSelected(previewSettings.isProjectViewFocusSupport());
         cbOpenEditorOnEditPreview.setSelected(previewSettings.isOpenEditorOnEditPreview());
@@ -66,6 +69,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     public void apply() throws ConfigurationException {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         previewSettings.setPreviewClosedOnEmptySelection(cbClosePreviewOnEmptySelection.isSelected());
+        previewSettings.setPreviewClosedOnTabChange(cbPreviewClosedOnTabChange.isSelected());
         previewSettings.setQuickNavigationKeyListenerEnabled(cbKeyListenerEnabled.isSelected());
         previewSettings.setProjectViewFocusSupport(cbProjectViewFocusSupport.isSelected());
         previewSettings.setOpenEditorOnEditPreview(cbOpenEditorOnEditPreview.isSelected());

@@ -25,7 +25,8 @@ public final class PreviewSettings  implements PersistentStateComponent<PreviewS
     }
 
     static final class OptionSet {
-        boolean CLOSE_PREVIEW_ON_EMPTY_SELECTION = false;
+        boolean CLOSE_PREVIEW_ON_EMPTY_SELECTION = true;
+        boolean CLOSE_PREVIEW_ON_TAB_CHANGE = false;
         boolean QUICK_NAVIGATION_KEY_LISTENER_ENABLED = false;
         boolean PROJECT_VIEW_FOCUS_SUPPORT = true;
         boolean OPEN_EDITOR_ON_EDIT_PREVIEW = true;
@@ -67,6 +68,13 @@ public final class PreviewSettings  implements PersistentStateComponent<PreviewS
     }
     public void setPreviewClosedOnEmptySelection(boolean previewClosedOnEmptySelection) {
         getState().CLOSE_PREVIEW_ON_EMPTY_SELECTION = previewClosedOnEmptySelection;
+    }
+
+    public boolean isPreviewClosedOnTabChange() {
+        return getState().CLOSE_PREVIEW_ON_TAB_CHANGE;
+    }
+    public void setPreviewClosedOnTabChange(boolean previewClosedOnTabChange) {
+        getState().CLOSE_PREVIEW_ON_TAB_CHANGE = previewClosedOnTabChange;
     }
 
     public boolean isQuickNavigationKeyListenerEnabled() {

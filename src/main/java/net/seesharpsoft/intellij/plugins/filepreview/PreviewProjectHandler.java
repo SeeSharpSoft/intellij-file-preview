@@ -68,8 +68,10 @@ public class PreviewProjectHandler {
 
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-            if (!(event.getNewProvider() instanceof PreviewEditorProvider)) {
-                closePreview();
+            if (PreviewSettings.getInstance().isPreviewClosedOnTabChange()) {
+                if (!(event.getNewProvider() instanceof PreviewEditorProvider)) {
+                    closePreview();
+                }
             }
         }
     };
@@ -253,7 +255,7 @@ public class PreviewProjectHandler {
         if (fileToFocus == null || !fileEditorManager.isFileOpen(fileToFocus)) {
             return;
         }
-        invokeSafe(() -> fileEditorManager.openFile(file, true));
+        invokeSafe(() -> fileEditorManager.openFile(fileToFocus, true));
     }
 
     public VirtualFile createAndSetPreviewFile(VirtualFile file) {
