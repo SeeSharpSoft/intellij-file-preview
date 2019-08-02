@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.editor.CaretState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -17,11 +16,14 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.MessageBusConnection;
+import net.seesharpsoft.intellij.editor.EditorStateSynchronizer;
+import net.seesharpsoft.intellij.editor.EditorStateSynchronizerFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -156,43 +158,41 @@ public class PreviewProjectHandler {
         if (!isValid() || file == null) {
             return;
         }
-        ApplicationManager.getApplication().invokeLater(() -> openFileEditorWithCaretsAndSelections(file));
+        ApplicationManager.getApplication().invokeLater(() -> openFileEditorWithCurrentEditorState(file));
     }
 
-    private void openFileEditorWithCaretsAndSelections(final VirtualFile file) {
+    private void openFileEditorWithCurrentEditorState(final VirtualFile file) {
         final VirtualFile fileToOpen = file instanceof PreviewVirtualFile ? ((PreviewVirtualFile)file).getSource() : file;
-        final List<CaretState>[] caretsAndSelections = getCaretsAndSelections(file);
-        invokeSafe(() -> openFileEditorsWithCaretsAndSelections(fileToOpen, caretsAndSelections));
+        final List<EditorStateSynchronizer> editorStateSynchronizers = getEditorStateSynchronizers(file);
+        invokeSafe(() -> openFileEditorWithCurrentEditorState(fileToOpen, editorStateSynchronizers));
+    }
+
+    private void openFileEditorWithCurrentEditorState(final VirtualFile file, final List<EditorStateSynchronizer> editorStateSynchronizers) {
+        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+        final FileEditor[] targetFileEditors = fileEditorManager.openFile(file, true);
+        for (FileEditor fileEditor : targetFileEditors) {
+            EditorStateSynchronizer synchronizer = editorStateSynchronizers.stream()
+                            .filter(editorStateSynchronizer -> editorStateSynchronizer.accepts(fileEditor))
+                            .findFirst().orElse(null);
+            if (synchronizer != null) {
+                synchronizer.applyState(fileEditor);
+            }
+        }
     }
 
     @NotNull
-    private List<CaretState>[] getCaretsAndSelections(final VirtualFile file) {
+    private List<EditorStateSynchronizer> getEditorStateSynchronizers(final VirtualFile file) {
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         final FileEditor[] sourceFileEditors = fileEditorManager.getEditors(file);
-        final List<CaretState>[] caretsAndSelections = new List[sourceFileEditors.length];
-        for (int i = 0; i < sourceFileEditors.length; ++i) {
-            final FileEditor fileEditor = sourceFileEditors[i];
-            if (fileEditor instanceof TextEditor) {
-                caretsAndSelections[i] = ((TextEditor) fileEditor).getEditor().getCaretModel().getCaretsAndSelections();
+        final List<EditorStateSynchronizer> editorStateSynchronizers = new ArrayList<>();
+        for (FileEditor fileEditor : sourceFileEditors) {
+            EditorStateSynchronizer synchronizer = EditorStateSynchronizerFactory.getInstance().create(fileEditor);
+            if (synchronizer != null) {
+                editorStateSynchronizers.add(synchronizer);
             }
         }
         closePreview();
-        return caretsAndSelections;
-    }
-
-    private void openFileEditorsWithCaretsAndSelections(final VirtualFile file, final List<CaretState>... caretsAndSelections) {
-        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-        final FileEditor[] targetFileEditors = fileEditorManager.openFile(file, true);
-        for (int i = 0; i < caretsAndSelections.length && i < targetFileEditors.length; ++i) {
-            final List<CaretState> caretsAndSelectionEntry = caretsAndSelections[i];
-            if (caretsAndSelectionEntry == null) {
-                continue;
-            }
-            final FileEditor fileEditor = targetFileEditors[i];
-            if (fileEditor instanceof TextEditor) {
-                ((TextEditor) fileEditor).getEditor().getCaretModel().setCaretsAndSelections(caretsAndSelectionEntry, false);
-            }
-        }
+        return editorStateSynchronizers;
     }
 
     public void consumeSelectedFile(final Component tree, Consumer<VirtualFile> consumer) {
