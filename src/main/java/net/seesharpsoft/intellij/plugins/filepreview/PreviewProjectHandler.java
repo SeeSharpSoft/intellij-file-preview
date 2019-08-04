@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static net.seesharpsoft.intellij.plugins.filepreview.PreviewSettings.PreviewBehavior.EXPLICIT_PREVIEW;
+
 public class PreviewProjectHandler {
 
     private Project myProject;
@@ -43,7 +45,7 @@ public class PreviewProjectHandler {
                 break;
             case EXPLICIT_PREVIEW:
                 consumeSelectedFile((Component) treeSelectionEvent.getSource(), file -> {
-                    focusFileEditor(file);
+                    focusFileEditor(file, false);
                 });
                 break;
             default:
@@ -68,13 +70,13 @@ public class PreviewProjectHandler {
 
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-            consumeSelectedFile(myProjectViewPane.getTree(), file -> {
-                if (!(event.getNewProvider() instanceof PreviewEditorProvider)) {
+            if (!PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW) && !(event.getNewProvider() instanceof PreviewEditorProvider)) {
+                consumeSelectedFile(myProjectViewPane.getTree(), file -> {
                     if (PreviewSettings.getInstance().isPreviewClosedOnTabChange() || !isCurrentlyPreviewed(file)) {
                         closePreview();
                     }
-                }
-            });
+                });
+            }
         }
     };
 
@@ -82,7 +84,10 @@ public class PreviewProjectHandler {
         @Override
         public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
             if (!(file instanceof PreviewVirtualFile) || !file.equals(myPreviewFile)) {
-                closePreview();
+                if (!PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW) ||
+                        ((file instanceof PreviewVirtualFile) && !isCurrentlyPreviewed(file))) {
+                    closePreview();
+                }
                 if (file instanceof PreviewVirtualFile) {
                     initPreviewFile((PreviewVirtualFile) file);
                 }
@@ -248,7 +253,7 @@ public class PreviewProjectHandler {
         invokeSafeAndWait(() -> fileEditorManager.closeFile(closingPreviewFile, false, true));
     }
 
-    public void focusFileEditor(VirtualFile file) {
+    public void focusFileEditor(VirtualFile file, boolean focusEditor) {
         if (!isValid() || file == null) {
             return;
         }
@@ -257,7 +262,7 @@ public class PreviewProjectHandler {
         if (fileToFocus == null || !fileEditorManager.isFileOpen(fileToFocus)) {
             return;
         }
-        invokeSafe(() -> fileEditorManager.openFile(fileToFocus, true));
+        invokeSafe(() -> fileEditorManager.openFile(fileToFocus, focusEditor));
     }
 
     public VirtualFile createAndSetPreviewFile(VirtualFile file) {

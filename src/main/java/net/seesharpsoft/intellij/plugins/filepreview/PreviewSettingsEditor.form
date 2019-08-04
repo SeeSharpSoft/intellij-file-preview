@@ -31,7 +31,7 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Enable quick navigation key listener"/>
+              <text value="Enable quick navigation key events"/>
             </properties>
           </component>
           <component id="743f2" class="javax.swing.JCheckBox" binding="cbProjectViewFocusSupport">
@@ -81,7 +81,7 @@
               <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Open actual editor when editing preview (preview tab gets closed)"/>
+              <text value="Open actual editor when editing preview (Preview Editor tab gets closed)"/>
             </properties>
           </component>
           <component id="a5105" class="javax.swing.JCheckBox" binding="cbPreviewClosedOnTabChange">
