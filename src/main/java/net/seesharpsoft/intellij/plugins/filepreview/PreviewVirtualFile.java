@@ -40,7 +40,12 @@ public class PreviewVirtualFile extends VirtualFile {
     @NotNull
     @Override
     public String getPath() {
-        return String.format("%s - Just a preview of '%s'", PreviewFileType.INSTANCE.getDefaultExtension(), getSource().getName());
+        return String.format("%s - [%s]", PreviewFileType.INSTANCE.getDefaultExtension(), getSource().getPresentableUrl());
+    }
+
+    @Nullable
+    public String getExtension() {
+        return null;
     }
 
     @Override

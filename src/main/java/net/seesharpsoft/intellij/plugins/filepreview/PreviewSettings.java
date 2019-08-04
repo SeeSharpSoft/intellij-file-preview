@@ -15,12 +15,22 @@ import java.beans.PropertyChangeSupport;
         storages = {@Storage(PreviewSettings.PREVIEW_SETTINGS_STORAGE_FILE)}
 )
 @SuppressWarnings("all")
-public final class PreviewSettings  implements PersistentStateComponent<PreviewSettings.OptionSet> {
+public final class PreviewSettings implements PersistentStateComponent<PreviewSettings.OptionSet> {
 
     public static final String PREVIEW_SETTINGS_STORAGE_FILE = "QuickFilePreview.xml";
 
+    public enum PreviewBehavior {
+        PREVIEW_BY_DEFAULT,
+        EXPLICIT_PREVIEW
+    }
+
     static final class OptionSet {
-        boolean CLOSE_PREVIEW_ON_EMPTY_SELECTION = false;
+        boolean CLOSE_PREVIEW_ON_EMPTY_SELECTION = true;
+        boolean CLOSE_PREVIEW_ON_TAB_CHANGE = false;
+        boolean QUICK_NAVIGATION_KEY_LISTENER_ENABLED = true;
+        boolean PROJECT_VIEW_FOCUS_SUPPORT = true;
+        boolean OPEN_EDITOR_ON_EDIT_PREVIEW = true;
+        PreviewBehavior PREVIEW_BEHAVIOR = PreviewBehavior.PREVIEW_BY_DEFAULT;
     }
 
     private OptionSet myOptions = new OptionSet();
@@ -56,7 +66,49 @@ public final class PreviewSettings  implements PersistentStateComponent<PreviewS
     public boolean isPreviewClosedOnEmptySelection() {
         return getState().CLOSE_PREVIEW_ON_EMPTY_SELECTION;
     }
+
     public void setPreviewClosedOnEmptySelection(boolean previewClosedOnEmptySelection) {
         getState().CLOSE_PREVIEW_ON_EMPTY_SELECTION = previewClosedOnEmptySelection;
+    }
+
+    public boolean isPreviewClosedOnTabChange() {
+        return getState().CLOSE_PREVIEW_ON_TAB_CHANGE;
+    }
+
+    public void setPreviewClosedOnTabChange(boolean previewClosedOnTabChange) {
+        getState().CLOSE_PREVIEW_ON_TAB_CHANGE = previewClosedOnTabChange;
+    }
+
+    public boolean isQuickNavigationKeyListenerEnabled() {
+        return getState().QUICK_NAVIGATION_KEY_LISTENER_ENABLED;
+    }
+
+    public void setQuickNavigationKeyListenerEnabled(boolean quickNavigationKeyListenerEnabled) {
+        getState().QUICK_NAVIGATION_KEY_LISTENER_ENABLED = quickNavigationKeyListenerEnabled;
+    }
+
+    public boolean isProjectViewFocusSupport() {
+        return getState().PROJECT_VIEW_FOCUS_SUPPORT;
+    }
+
+    public void setProjectViewFocusSupport(boolean projectViewFocusSupport) {
+        getState().PROJECT_VIEW_FOCUS_SUPPORT = projectViewFocusSupport;
+    }
+
+    public boolean isOpenEditorOnEditPreview() {
+        return getState().OPEN_EDITOR_ON_EDIT_PREVIEW;
+    }
+
+    public void setOpenEditorOnEditPreview(boolean openEditorOnEditPreview) {
+        getState().OPEN_EDITOR_ON_EDIT_PREVIEW = openEditorOnEditPreview;
+    }
+
+
+    public PreviewBehavior getPreviewBehavior() {
+        return getState().PREVIEW_BEHAVIOR;
+    }
+
+    public void setPreviewBehavior(PreviewBehavior previewBehavior) {
+        getState().PREVIEW_BEHAVIOR = previewBehavior;
     }
 }

@@ -3,12 +3,12 @@
   <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="756" height="400"/>
+      <xy x="20" y="20" width="941" height="400"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="e13a8" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="e13a8" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -16,21 +16,82 @@
         <properties>
           <name value=""/>
         </properties>
-        <border type="line" title="Preview Editor"/>
+        <border type="line" title="Project View"/>
         <children>
           <component id="8abe3" class="javax.swing.JCheckBox" binding="cbClosePreviewOnEmptySelection">
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text value="Close Preview Editor tab if no file is selected (e.g. directory or structure node selected)"/>
             </properties>
           </component>
-          <hspacer id="fb71a">
+          <component id="4863d" class="javax.swing.JCheckBox" binding="cbKeyListenerEnabled">
             <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
-          </hspacer>
+            <properties>
+              <text value="Enable quick navigation key events"/>
+            </properties>
+          </component>
+          <component id="743f2" class="javax.swing.JCheckBox" binding="cbProjectViewFocusSupport">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Focus Project View after opening/closing file editor"/>
+            </properties>
+          </component>
+          <grid id="daeed" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="c6615" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Preview behavior:"/>
+                </properties>
+              </component>
+              <component id="72ec0" class="javax.swing.JComboBox" binding="sbPreviewBehavior">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <model>
+                    <item value="Auto preview on select"/>
+                    <item value="Manual preview (&lt;SPACE&gt;)"/>
+                  </model>
+                </properties>
+              </component>
+              <hspacer id="6c264">
+                <constraints>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+              </hspacer>
+            </children>
+          </grid>
+          <component id="e2cc1" class="javax.swing.JCheckBox" binding="cbOpenEditorOnEditPreview">
+            <constraints>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Open actual editor when editing preview (Preview Editor tab gets closed)"/>
+            </properties>
+          </component>
+          <component id="a5105" class="javax.swing.JCheckBox" binding="cbPreviewClosedOnTabChange">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Close Preview Editor tab if other tab is selected"/>
+            </properties>
+          </component>
         </children>
       </grid>
       <vspacer id="cecf9">
