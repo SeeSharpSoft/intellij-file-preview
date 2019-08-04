@@ -68,11 +68,13 @@ public class PreviewProjectHandler {
 
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-            if (PreviewSettings.getInstance().isPreviewClosedOnTabChange()) {
+            consumeSelectedFile(myProjectViewPane.getTree(), file -> {
                 if (!(event.getNewProvider() instanceof PreviewEditorProvider)) {
-                    closePreview();
+                    if (PreviewSettings.getInstance().isPreviewClosedOnTabChange() || !isCurrentlyPreviewed(file)) {
+                        closePreview();
+                    }
                 }
-            }
+            });
         }
     };
 
