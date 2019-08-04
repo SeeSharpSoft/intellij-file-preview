@@ -8,7 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EditorSnapshotFactory {
+public final class EditorSnapshotFactory {
 
     private static final Map<Class, Class<? extends EditorSnapshot>> SNAPSHOT_PROVIDER;
 
