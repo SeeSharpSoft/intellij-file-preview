@@ -17,6 +17,9 @@ This plugin enables a quick file preview on simple selecting files in Project Vi
 - show preview (open temporary editor) of selected file
 - focus editor of selected file if already opened
 
+**Please note:** If **[Autoscroll to source](https://www.jetbrains.com/help/idea/navigating-through-the-source-code.html#scroll_to_from_source)** is enabled, the actual editor is opened instead of a preview.
+This is the intended and unchanged behavior. To make proper use of the Preview Tab, this option has to be disabled!
+
 This plugin is fresh like a mild breeze in summer - please contribute issues, ideas and feedback. Thanks!
 
 (inspired by https://youtrack.jetbrains.com/issue/IDEA-130918)
