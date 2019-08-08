@@ -17,7 +17,7 @@ import java.beans.PropertyChangeSupport;
 @SuppressWarnings("all")
 public final class PreviewSettings implements PersistentStateComponent<PreviewSettings.OptionSet> {
 
-    public static final String PREVIEW_SETTINGS_STORAGE_FILE = "QuickFilePreview.xml";
+    public static final String PREVIEW_SETTINGS_STORAGE_FILE = "quick-file-preview.xml";
 
     public enum PreviewBehavior {
         PREVIEW_BY_DEFAULT,
@@ -25,12 +25,12 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     }
 
     static final class OptionSet {
-        boolean CLOSE_PREVIEW_ON_EMPTY_SELECTION = true;
-        boolean CLOSE_PREVIEW_ON_TAB_CHANGE = false;
-        boolean QUICK_NAVIGATION_KEY_LISTENER_ENABLED = true;
-        boolean PROJECT_VIEW_FOCUS_SUPPORT = true;
-        boolean OPEN_EDITOR_ON_EDIT_PREVIEW = true;
-        PreviewBehavior PREVIEW_BEHAVIOR = PreviewBehavior.PREVIEW_BY_DEFAULT;
+        public boolean CLOSE_PREVIEW_ON_EMPTY_SELECTION = true;
+        public boolean CLOSE_PREVIEW_ON_TAB_CHANGE = false;
+        public boolean QUICK_NAVIGATION_KEY_LISTENER_ENABLED = true;
+        public boolean PROJECT_VIEW_FOCUS_SUPPORT = true;
+        public boolean OPEN_EDITOR_ON_EDIT_PREVIEW = true;
+        public PreviewBehavior PREVIEW_BEHAVIOR = PreviewBehavior.PREVIEW_BY_DEFAULT;
     }
 
     private OptionSet myOptions = new OptionSet();
@@ -66,7 +66,6 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     public boolean isPreviewClosedOnEmptySelection() {
         return getState().CLOSE_PREVIEW_ON_EMPTY_SELECTION;
     }
-
     public void setPreviewClosedOnEmptySelection(boolean previewClosedOnEmptySelection) {
         getState().CLOSE_PREVIEW_ON_EMPTY_SELECTION = previewClosedOnEmptySelection;
     }
@@ -74,7 +73,6 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     public boolean isPreviewClosedOnTabChange() {
         return getState().CLOSE_PREVIEW_ON_TAB_CHANGE;
     }
-
     public void setPreviewClosedOnTabChange(boolean previewClosedOnTabChange) {
         getState().CLOSE_PREVIEW_ON_TAB_CHANGE = previewClosedOnTabChange;
     }
@@ -82,7 +80,6 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     public boolean isQuickNavigationKeyListenerEnabled() {
         return getState().QUICK_NAVIGATION_KEY_LISTENER_ENABLED;
     }
-
     public void setQuickNavigationKeyListenerEnabled(boolean quickNavigationKeyListenerEnabled) {
         getState().QUICK_NAVIGATION_KEY_LISTENER_ENABLED = quickNavigationKeyListenerEnabled;
     }
@@ -90,7 +87,6 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     public boolean isProjectViewFocusSupport() {
         return getState().PROJECT_VIEW_FOCUS_SUPPORT;
     }
-
     public void setProjectViewFocusSupport(boolean projectViewFocusSupport) {
         getState().PROJECT_VIEW_FOCUS_SUPPORT = projectViewFocusSupport;
     }
@@ -98,16 +94,13 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     public boolean isOpenEditorOnEditPreview() {
         return getState().OPEN_EDITOR_ON_EDIT_PREVIEW;
     }
-
     public void setOpenEditorOnEditPreview(boolean openEditorOnEditPreview) {
         getState().OPEN_EDITOR_ON_EDIT_PREVIEW = openEditorOnEditPreview;
     }
 
-
     public PreviewBehavior getPreviewBehavior() {
         return getState().PREVIEW_BEHAVIOR;
     }
-
     public void setPreviewBehavior(PreviewBehavior previewBehavior) {
         getState().PREVIEW_BEHAVIOR = previewBehavior;
     }
