@@ -38,27 +38,29 @@ Whenever the focused file in the Project View changes, a preview is shown or the
 
 Whenever the focused file in the Project View changes, the already existing editor is focused. The Preview Editor tab is only shown when pressing \<SPACE>. The preview stays open on further navigation and must also be closed manually.
 
-### Close Preview Editor tab if no file is selected (*activated*)
+### Close Preview Editor tab if no file is selected (*enabled*)
 
-Switching the focus in the Project View to an directory or non-displayable element, the preview is closed. Deactivate to keep the last Preview Editor tab.
+Switching the focus in the Project View to an directory or non-displayable element, the preview is closed. Disable to keep the last Preview Editor tab.
 
-### Close Preview Editor tab if other tab is selected (*deactivated*)
+### Close Preview Editor tab if other tab is selected (*disabled*)
 
-Switching editor tabs does not close the current Preview Editor tab on default. 
+Switching editor tabs does not close the current Preview Editor tab on default.
 
-### Enable quick navigation key events (*activated*)
+### Enable quick navigation key events (*disabled*)
 
-Additional key commands are active if Project View is focused:
+Additional key commands will be activated (when Project View is focused):
 
 \<ESC>: close the currently focused editor
 
-\<TAB>: move input focus to the currently selected file editor 
+\<TAB>: move input focus to the currently selected file editor
 
-### Focus Project View after opening/closing file editor (*activated*)
+**Note:** The preview tab will always be closed on \<ESC>, even if the this option is disabled.
+
+### Focus Project View after opening/closing file editor (*enabled*)
 
 Grab/keep focus on Project View (instead of focusing editor) when opening or closing a file.
 
-### Open actual editor when editing preview (Preview Editor tab gets closed) (*activated*)
+### Open actual editor when editing preview (Preview Editor tab gets closed) (*enabled*)
 
 If activated, the Preview Editor tab is closed and the actual editor is opened when a change happened during preview. This causes a tiny input interruption. If deactivated, the Preview Editor tab stays open while editing, the actual editor is only opened on explicit \<DOUBLE-CLICK> or \<ENTER>.
 
