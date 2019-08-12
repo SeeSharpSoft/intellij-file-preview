@@ -3,13 +3,12 @@ package net.seesharpsoft.intellij.plugins.filepreview;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -34,7 +33,15 @@ public class PreviewProjectHandler {
     private Project myProject;
     private PreviewVirtualFile myPreviewFile;
     private AbstractProjectViewPane myProjectViewPane;
+    private final AnAction myReopenClosedTabAction;
     private final KeyListener myKeyListener;
+
+    private final DataContext myComponentDataContext = dataId -> {
+        if (!PlatformDataKeys.CONTEXT_COMPONENT.getName().equals(dataId)) {
+            throw new UnsupportedOperationException(dataId);
+        }
+        return FileEditorManagerEx.getInstanceEx(myProject).getSplitters();
+    };
 
     private final TreeSelectionListener myTreeSelectionListener = treeSelectionEvent -> {
         switch (PreviewSettings.getInstance().getPreviewBehavior()) {
@@ -63,6 +70,10 @@ public class PreviewProjectHandler {
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+            if (file instanceof PreviewVirtualFile) {
+                onAfterPreviewFileClosed((PreviewVirtualFile) file);
+            }
+
             if (PreviewSettings.getInstance().isProjectViewFocusSupport()) {
                 invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
             }
@@ -84,13 +95,17 @@ public class PreviewProjectHandler {
         @Override
         public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
             if (!(file instanceof PreviewVirtualFile) || !file.equals(myPreviewFile)) {
-                if (!PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW) ||
-                        ((file instanceof PreviewVirtualFile) && !isCurrentlyPreviewed(file))) {
-                    closePreview();
-                }
-                if (file instanceof PreviewVirtualFile) {
-                    initPreviewFile((PreviewVirtualFile) file);
-                }
+                consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> {
+                    if ((selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW)) ||
+                            ((file instanceof PreviewVirtualFile) && !isCurrentlyPreviewed(file)) ||
+                            (!(file instanceof PreviewVirtualFile) && isCurrentlyPreviewed(file))) {
+                        closePreview();
+                    }
+
+                    if (file instanceof PreviewVirtualFile) {
+                        onBeforePreviewFileOpened((PreviewVirtualFile) file);
+                    }
+                });
             }
         }
     };
@@ -107,17 +122,18 @@ public class PreviewProjectHandler {
 
     public PreviewProjectHandler() {
         myKeyListener = new PreviewKeyListener(this);
+        myReopenClosedTabAction = ActionManager.getInstance().getAction("ReopenClosedTab");
     }
 
     public boolean init(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
         assert myProject == null : "already initialized";
 
-        myProject = project;
-
-        myProjectViewPane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
+        myProjectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
         if (myProjectViewPane == null) {
             return false;
         }
+
+        myProject = project;
 
         myProjectViewPane.getTree().addTreeSelectionListener(myTreeSelectionListener);
         // required to support TAB key in listener - be aware of side effects...
@@ -167,7 +183,7 @@ public class PreviewProjectHandler {
         if (!isValid() || file == null) {
             return;
         }
-        ApplicationManager.getApplication().invokeLater(() -> openFileEditorWithPreviewSnapshot(file));
+        invokeSafe(() -> openFileEditorWithPreviewSnapshot(file));
     }
 
     private void openFileEditorWithPreviewSnapshot(final VirtualFile file) {
@@ -296,7 +312,17 @@ public class PreviewProjectHandler {
         return myProject != null && !myProject.isDisposed();
     }
 
-    protected void initPreviewFile(PreviewVirtualFile previewFile) {
+    protected void disposePreviewFile(PreviewVirtualFile previewFile) {
+        PreviewFileListener listener = previewFile.getUserData(PreviewFileListener.PREVIEW_FILE_LISTENER);
+
+        if (listener == null) {
+            return;
+        }
+
+        FileDocumentManager.getInstance().getDocument(previewFile.getSource()).removeDocumentListener(listener);
+    }
+
+    protected void onBeforePreviewFileOpened(PreviewVirtualFile previewFile) {
         myPreviewFile = previewFile;
         if (!PreviewSettings.getInstance().isOpenEditorOnEditPreview()) {
             return;
@@ -312,13 +338,11 @@ public class PreviewProjectHandler {
         });
     }
 
-    protected void disposePreviewFile(PreviewVirtualFile previewFile) {
-        PreviewFileListener listener = previewFile.getUserData(PreviewFileListener.PREVIEW_FILE_LISTENER);
-
-        if (listener == null) {
-            return;
+    protected void onAfterPreviewFileClosed(PreviewVirtualFile previewFile) {
+        // Preview files are not supposed to be part of the "closed tabs" stack - therefore remove them by executing the action
+        // => a preview can not be restored, but it is removed from stack
+        if (myReopenClosedTabAction != null && previewFile != null) {
+            invokeSafe(() -> myReopenClosedTabAction.actionPerformed(AnActionEvent.createFromDataContext("Editor", null, myComponentDataContext)));
         }
-
-        FileDocumentManager.getInstance().getDocument(previewFile.getSource()).removeDocumentListener(listener);
     }
 }
