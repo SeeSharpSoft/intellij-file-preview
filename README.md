@@ -64,6 +64,10 @@ Grab/keep focus on Project View (instead of focusing editor) when opening or clo
 
 If activated, the Preview Editor tab is closed and the actual editor is opened when a change happened during preview. This causes a tiny input interruption. If deactivated, the Preview Editor tab stays open while editing, the actual editor is only opened on explicit \<DOUBLE-CLICK> or \<ENTER>.
 
+### Toggle tree expand/collapse by single click (*enabled*)
+
+Defines the required number of clicks to expand/collapse a node in Project View tree: one click if option is *enabled* (plugin default), two clicks if option is *disabled* (IDE default).
+
 ## Installation
 
 Install it from the Jetbrains plugin repository within your IDE (**recommended**):

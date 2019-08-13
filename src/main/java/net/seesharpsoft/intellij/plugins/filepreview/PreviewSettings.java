@@ -31,6 +31,7 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
         public boolean PROJECT_VIEW_FOCUS_SUPPORT = true;
         public boolean OPEN_EDITOR_ON_EDIT_PREVIEW = true;
         public PreviewBehavior PREVIEW_BEHAVIOR = PreviewBehavior.PREVIEW_BY_DEFAULT;
+        public boolean PROJECT_VIEW_TOGGLE_ONE_CLICK = true;
     }
 
     private OptionSet myOptions = new OptionSet();
@@ -81,7 +82,9 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
         return getState().QUICK_NAVIGATION_KEY_LISTENER_ENABLED;
     }
     public void setQuickNavigationKeyListenerEnabled(boolean quickNavigationKeyListenerEnabled) {
+        boolean oldValue = getState().QUICK_NAVIGATION_KEY_LISTENER_ENABLED;
         getState().QUICK_NAVIGATION_KEY_LISTENER_ENABLED = quickNavigationKeyListenerEnabled;
+        myPropertyChangeSupport.firePropertyChange("QuickNavigationKeyListenerEnabled", oldValue, quickNavigationKeyListenerEnabled);
     }
 
     public boolean isProjectViewFocusSupport() {
@@ -103,5 +106,14 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     }
     public void setPreviewBehavior(PreviewBehavior previewBehavior) {
         getState().PREVIEW_BEHAVIOR = previewBehavior;
+    }
+
+    public boolean isProjectViewToggleOneClick() {
+        return getState().PROJECT_VIEW_TOGGLE_ONE_CLICK;
+    }
+    public void setProjectViewToggleOneClick(boolean projectViewToggleOneClick) {
+        boolean oldValue = getState().PROJECT_VIEW_TOGGLE_ONE_CLICK;
+        getState().PROJECT_VIEW_TOGGLE_ONE_CLICK = projectViewToggleOneClick;
+        myPropertyChangeSupport.firePropertyChange("ProjectViewToggleOneClick", oldValue, projectViewToggleOneClick);
     }
 }

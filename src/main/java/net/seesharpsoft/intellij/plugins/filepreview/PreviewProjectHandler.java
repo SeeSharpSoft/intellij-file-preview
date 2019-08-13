@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyListener;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -41,6 +42,20 @@ public class PreviewProjectHandler {
             throw new UnsupportedOperationException(dataId);
         }
         return FileEditorManagerEx.getInstanceEx(myProject).getSplitters();
+    };
+
+    private final PropertyChangeListener mySettingsPropertyChangeListener = evt -> {
+        switch (evt.getPropertyName()) {
+            case "ProjectViewToggleOneClick":
+                myProjectViewPane.getTree().setToggleClickCount((boolean)evt.getNewValue() ? 1 : 2);
+                break;
+            case "QuickNavigationKeyListenerEnabled":
+                myProjectViewPane.getTree().setFocusTraversalKeysEnabled(!(boolean)evt.getNewValue());
+                break;
+            default:
+                // nothing to do yet
+                break;
+        }
     };
 
     private final TreeSelectionListener myTreeSelectionListener = treeSelectionEvent -> {
@@ -135,10 +150,15 @@ public class PreviewProjectHandler {
 
         myProject = project;
 
+        PreviewSettings previewSettings = PreviewSettings.getInstance();
+        previewSettings.addPropertyChangeListener(mySettingsPropertyChangeListener);
+
         myProjectViewPane.getTree().addTreeSelectionListener(myTreeSelectionListener);
-        // required to support TAB key in listener - be aware of side effects...
-        myProjectViewPane.getTree().setFocusTraversalKeysEnabled(false);
         myProjectViewPane.getTree().addKeyListener(myKeyListener);
+        // 'false' required to support TAB key in listener - be aware of side effects...
+        myProjectViewPane.getTree().setFocusTraversalKeysEnabled(!previewSettings.isQuickNavigationKeyListenerEnabled());
+        myProjectViewPane.getTree().setToggleClickCount(previewSettings.isProjectViewToggleOneClick() ? 1 : 2);
+
         messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myFileEditorManagerListener);
         messageBusConnection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, myFileEditorManagerBeforeListener);
 
@@ -149,6 +169,9 @@ public class PreviewProjectHandler {
         assert myProject != null : "not initialized yet";
 
         closePreview();
+
+        PreviewSettings previewSettings = PreviewSettings.getInstance();
+        previewSettings.removePropertyChangeListener(mySettingsPropertyChangeListener);
 
         if (myProjectViewPane != null) {
             myProjectViewPane.getTree().removeTreeSelectionListener(myTreeSelectionListener);
