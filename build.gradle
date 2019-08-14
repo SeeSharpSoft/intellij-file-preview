@@ -1,13 +1,13 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '0.4.9'
+    id 'org.jetbrains.intellij' version '0.4.10'
     id 'jacoco'
     id 'com.github.kt3k.coveralls' version '2.8.2'
     id "com.github.ManifestClasspath" version "0.1.0-RELEASE"
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.3.1'
+version '1.3.2'
 
 sourceCompatibility = 1.8
 
@@ -28,9 +28,9 @@ intellij {
 patchPluginXml {
     changeNotes """
 <pre style="font-family: sans-serif">
-[NEW] Note of "Autoscroll to source" behavior conflict #17
-[FIX] Cannot set plugin preferences #18
-[FIX] ESC keyboard shortcut should only ever close Preview windows #19
+[FIX] Remove preview tabs from closed tabs stack #26
+[NEW] Enable/disable one-click Project View tree navigation #24
+[NEW] Snapshot support for TextEditorWithPreview (e.g. SVG)
 </pre>
       """
 }

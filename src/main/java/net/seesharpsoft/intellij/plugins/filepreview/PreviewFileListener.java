@@ -19,7 +19,7 @@ public class PreviewFileListener implements DocumentListener {
 
     @Override
     public void beforeDocumentChange(@NotNull DocumentEvent event) {
-        myPreviewProjectHandler.openFileEditor(myPreviewFile);
+        myPreviewProjectHandler.openFileEditorForPreview(myPreviewFile);
     }
 
 }

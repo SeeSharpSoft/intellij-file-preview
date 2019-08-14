@@ -2,6 +2,7 @@ package net.seesharpsoft.intellij.editor;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
@@ -15,6 +16,7 @@ public final class EditorSnapshotFactory {
     static {
         SNAPSHOT_PROVIDER = new HashMap<>();
         SNAPSHOT_PROVIDER.put(TextEditor.class, TextEditorSnapshot.class);
+        SNAPSHOT_PROVIDER.put(TextEditorWithPreview.class, TextEditorWithPreviewSnapshot.class);
     }
 
     private static final EditorSnapshotFactory INSTANCE = new EditorSnapshotFactory();

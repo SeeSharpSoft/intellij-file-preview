@@ -16,9 +16,10 @@ This plugin enables a quick file preview on simple selecting files in Project Vi
 
 - show preview (open temporary editor) of selected file
 - focus editor of selected file if already opened
+- settings page to individualize preview behavior  
 
 **Please note:** If **[Autoscroll to source](https://www.jetbrains.com/help/idea/navigating-through-the-source-code.html#scroll_to_from_source)** is enabled, the actual editor is opened instead of a preview.
-This is the intended and unchanged behavior. To make proper use of the Preview Tab, this option has to be disabled!
+This is the intended and unchanged behavior. To make proper use of the Preview Tab, **this option must be disabled!**
 
 This plugin is fresh like a mild breeze in summer - please contribute issues, ideas and feedback. Thanks!
 
@@ -63,6 +64,10 @@ Grab/keep focus on Project View (instead of focusing editor) when opening or clo
 ### Open actual editor when editing preview (Preview Editor tab gets closed) (*enabled*)
 
 If activated, the Preview Editor tab is closed and the actual editor is opened when a change happened during preview. This causes a tiny input interruption. If deactivated, the Preview Editor tab stays open while editing, the actual editor is only opened on explicit \<DOUBLE-CLICK> or \<ENTER>.
+
+### Toggle tree expand/collapse by single click (*enabled*)
+
+Defines the required number of clicks to expand/collapse a node in Project View tree: one click if option is *enabled* (plugin default), two clicks if option is *disabled* (IDE default).
 
 ## Installation
 

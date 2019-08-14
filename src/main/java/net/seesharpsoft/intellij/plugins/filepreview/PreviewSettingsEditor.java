@@ -19,6 +19,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     private JComboBox sbPreviewBehavior;
     private JCheckBox cbOpenEditorOnEditPreview;
     private JCheckBox cbPreviewClosedOnTabChange;
+    private JCheckBox cbProjectViewOneClickToggle;
 
     @NotNull
     @Override
@@ -51,7 +52,8 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
                 isModified(cbKeyListenerEnabled, previewSettings.isQuickNavigationKeyListenerEnabled()) ||
                 isModified(cbProjectViewFocusSupport, previewSettings.isProjectViewFocusSupport()) ||
                 isModified(cbOpenEditorOnEditPreview, previewSettings.isOpenEditorOnEditPreview()) ||
-                !Objects.equals(sbPreviewBehavior.getSelectedIndex(), previewSettings.getPreviewBehavior().ordinal());
+                !Objects.equals(sbPreviewBehavior.getSelectedIndex(), previewSettings.getPreviewBehavior().ordinal()) ||
+                isModified(cbProjectViewOneClickToggle, previewSettings.isProjectViewToggleOneClick());
     }
 
     @Override
@@ -63,6 +65,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         cbProjectViewFocusSupport.setSelected(previewSettings.isProjectViewFocusSupport());
         cbOpenEditorOnEditPreview.setSelected(previewSettings.isOpenEditorOnEditPreview());
         sbPreviewBehavior.setSelectedIndex(previewSettings.getPreviewBehavior().ordinal());
+        cbProjectViewOneClickToggle.setSelected(previewSettings.isProjectViewToggleOneClick());
     }
 
     @Override
@@ -74,5 +77,6 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         previewSettings.setProjectViewFocusSupport(cbProjectViewFocusSupport.isSelected());
         previewSettings.setOpenEditorOnEditPreview(cbOpenEditorOnEditPreview.isSelected());
         previewSettings.setPreviewBehavior(PreviewSettings.PreviewBehavior.values()[sbPreviewBehavior.getSelectedIndex()]);
+        previewSettings.setProjectViewToggleOneClick(cbProjectViewOneClickToggle.isSelected());
     }
 }
