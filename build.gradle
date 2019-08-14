@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.3.2'
+version '1.4.0'
 
 sourceCompatibility = 1.8
 
@@ -21,16 +21,14 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version System.getenv().getOrDefault('IDEA_VERSION', 'IC-191.5701.16')
+    version System.getenv().getOrDefault('IDEA_VERSION', 'IC-192.5728.98')
     updateSinceUntilBuild false
     instrumentCode true
 }
 patchPluginXml {
     changeNotes """
 <pre style="font-family: sans-serif">
-[FIX] Remove preview tabs from closed tabs stack #26
-[NEW] Enable/disable one-click Project View tree navigation #24
-[NEW] Snapshot support for TextEditorWithPreview (e.g. SVG)
+[NEW] Editor tab handling reworked
 </pre>
       """
 }

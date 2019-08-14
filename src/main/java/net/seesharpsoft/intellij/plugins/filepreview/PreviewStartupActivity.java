@@ -1,6 +1,8 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -12,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.picocontainer.MutablePicoContainer;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -52,6 +55,8 @@ public class PreviewStartupActivity implements StartupActivity, DumbAware {
             return;
         }
 
+        registerPreviewFileEditorManagerComponent(activityProject);
+
         MessageBusConnection connection = activityProject.getMessageBus().connect();
         connection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
             @Override
@@ -79,5 +84,14 @@ public class PreviewStartupActivity implements StartupActivity, DumbAware {
         });
         // try to register at startup
         register(activityProject, connection);
+    }
+
+    private void registerPreviewFileEditorManagerComponent(@NotNull Project project) {
+        FileEditorManagerEx fileEditorManagerEx = FileEditorManagerEx.getInstanceEx(project);
+        PreviewFileEditorManager fileEditorManager = new PreviewFileEditorManager(fileEditorManagerEx);
+//        ApplicationImpl applicationImpl = (ApplicationImpl) ApplicationManager.getApplication();
+        MutablePicoContainer picoContainer = (MutablePicoContainer)project.getPicoContainer();
+        picoContainer.unregisterComponentByInstance(fileEditorManagerEx);
+        picoContainer.registerComponentInstance(FileEditorManager.class, fileEditorManager);
     }
 }
