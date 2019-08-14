@@ -202,19 +202,20 @@ public class PreviewProjectHandler {
         return myPreviewFile.equals(file) || myPreviewFile.getSource().equals(file);
     }
 
-    public void openFileEditor(final VirtualFile file) {
+    public void openFileEditorForPreview(final PreviewVirtualFile file) {
         if (!isValid() || file == null) {
             return;
         }
         invokeSafe(() -> openFileEditorWithPreviewSnapshot(file));
     }
 
-    private void openFileEditorWithPreviewSnapshot(final VirtualFile file) {
-        final VirtualFile fileToOpen = file instanceof PreviewVirtualFile ? ((PreviewVirtualFile) file).getSource() : file;
-        final List<EditorSnapshot> editorSnapshots = getEditorsSnapshots(file);
-        if (isCurrentlyPreviewed(file)) {
-            closePreview();
+    private void openFileEditorWithPreviewSnapshot(final PreviewVirtualFile file) {
+        if (!isCurrentlyPreviewed(file)) {
+            return;
         }
+        final VirtualFile fileToOpen = file.getSource();
+        final List<EditorSnapshot> editorSnapshots = getEditorsSnapshots(file);
+        closePreview();
         invokeSafe(() -> openFileEditorWithPreviewSnapshot(fileToOpen, editorSnapshots));
     }
 

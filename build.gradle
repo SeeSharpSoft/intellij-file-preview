@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.3.1'
+version '1.3.2'
 
 sourceCompatibility = 1.8
 
@@ -30,6 +30,7 @@ patchPluginXml {
 <pre style="font-family: sans-serif">
 [FIX] Remove preview tabs from closed tabs stack #26
 [NEW] Enable/disable one-click Project View tree navigation #24
+[NEW] Snapshot support for TextEditorWithPreview (e.g. SVG)
 </pre>
       """
 }
