@@ -24,7 +24,7 @@ public class PreviewKeyListener implements KeyListener {
                 if (PreviewSettings.getInstance().isQuickNavigationKeyListenerEnabled()) {
                     myPreviewProjectHandler.closeCurrentFileEditor();
                 } else {
-                    myPreviewProjectHandler.closePreview();
+                    myPreviewProjectHandler.closePreviews();
                 }
                 break;
             case KeyEvent.VK_SPACE:
