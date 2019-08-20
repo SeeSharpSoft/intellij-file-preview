@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.4.0'
+version '1.4.1'
 
 sourceCompatibility = 1.8
 
@@ -29,6 +29,8 @@ patchPluginXml {
     changeNotes """
 <pre style="font-family: sans-serif">
 [NEW] Editor tab handling reworked
+[NEW] Preview tab title pattern customization
+[NEW] Option to color the file preview tab #12
 [NEW] Keep scroll and cursor position of already previewed files #13
 [FIX] Show file/class Structure details while in preview #25
 [FIX] Typing in a file to open file in Preview in full Editor feature is a little off #27

@@ -7,6 +7,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
@@ -32,6 +33,8 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
         public boolean OPEN_EDITOR_ON_EDIT_PREVIEW = true;
         public PreviewBehavior PREVIEW_BEHAVIOR = PreviewBehavior.PREVIEW_BY_DEFAULT;
         public boolean PROJECT_VIEW_TOGGLE_ONE_CLICK = true;
+        public String PREVIEW_TAB_TITLE_PATTERN = "<<%s>>";
+        public String PREVIEW_TAB_COLOR;
     }
 
     private OptionSet myOptions = new OptionSet();
@@ -122,5 +125,26 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
         boolean oldValue = getState().PROJECT_VIEW_TOGGLE_ONE_CLICK;
         getState().PROJECT_VIEW_TOGGLE_ONE_CLICK = projectViewToggleOneClick;
         myPropertyChangeSupport.firePropertyChange("ProjectViewToggleOneClick", oldValue, projectViewToggleOneClick);
+    }
+
+    public Color getPreviewTabColor() {
+        String color = getState().PREVIEW_TAB_COLOR;
+        try {
+            return color == null || color.isEmpty() ? null : Color.decode(getState().PREVIEW_TAB_COLOR);
+        } catch (NumberFormatException exc) {
+            return null;
+        }
+    }
+
+    public void setPreviewTabColor(Color color) {
+        getState().PREVIEW_TAB_COLOR = color == null ? "" : "" + color.getRGB();
+    }
+
+    public String getPreviewTabTitlePattern() {
+        return getState().PREVIEW_TAB_TITLE_PATTERN;
+    }
+
+    public void setPreviewTabTitlePattern(String titlePattern) {
+        getState().PREVIEW_TAB_TITLE_PATTERN = titlePattern;
     }
 }

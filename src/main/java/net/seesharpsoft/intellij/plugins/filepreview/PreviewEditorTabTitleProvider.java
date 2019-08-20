@@ -7,16 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PreviewEditorTabTitleProvider implements EditorTabTitleProvider {
-
-    public static final String NAME_PREFIX = "<<";
-    public static final String NAME_SUFFIX = ">>";
-
     @Nullable
     @Override
     public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
-        String previewVirtualFile = file.getUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY);
-        if (previewVirtualFile != null) {
-            return String.format("%s%s%s", NAME_PREFIX, file.getName(), NAME_SUFFIX);
+        if (PreviewUtil.isPreviewed(file)) {
+            return String.format(PreviewSettings.getInstance().getPreviewTabTitlePattern(), file.getName());
         }
         return null;
     }
