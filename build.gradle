@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.3.2'
+version '1.4.0'
 
 sourceCompatibility = 1.8
 
@@ -28,9 +28,11 @@ intellij {
 patchPluginXml {
     changeNotes """
 <pre style="font-family: sans-serif">
-[FIX] Remove preview tabs from closed tabs stack #26
-[NEW] Enable/disable one-click Project View tree navigation #24
-[NEW] Snapshot support for TextEditorWithPreview (e.g. SVG)
+[NEW] Editor tab handling reworked
+[NEW] Keep scroll and cursor position of already previewed files #13
+[FIX] Show file/class Structure details while in preview #25
+[FIX] Typing in a file to open file in Preview in full Editor feature is a little off #27
+[FIX] Strange behavior when "Preferences/Editor/General/Editor Tabs => Open declaration source in the same tab" enabled #29
 </pre>
       """
 }
