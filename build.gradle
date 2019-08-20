@@ -21,7 +21,7 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version System.getenv().getOrDefault('IDEA_VERSION', 'IC-192.5728.98')
+    version System.getenv().getOrDefault('IDEA_VERSION', 'IC-191.5701.16')
     updateSinceUntilBuild false
     instrumentCode true
 }
@@ -29,6 +29,10 @@ patchPluginXml {
     changeNotes """
 <pre style="font-family: sans-serif">
 [NEW] Editor tab handling reworked
+[NEW] Keep scroll and cursor position of already previewed files #13
+[FIX] Show file/class Structure details while in preview #25
+[FIX] Typing in a file to open file in Preview in full Editor feature is a little off #27
+[FIX] Strange behavior when "Preferences/Editor/General/Editor Tabs => Open declaration source in the same tab" enabled #29
 </pre>
       """
 }

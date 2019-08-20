@@ -75,7 +75,7 @@ public class PreviewProjectHandler {
             super.mouseClicked(e);
 
             if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-                consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> PreviewUtil.disposePreviewFile(selectedFile));
+                consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> PreviewUtil.disposePreview(selectedFile));
             }
         }
     };
@@ -90,7 +90,7 @@ public class PreviewProjectHandler {
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            PreviewUtil.disposePreviewFile(file);
+            PreviewUtil.disposePreview(file);
 
             if (PreviewSettings.getInstance().isProjectViewFocusSupport()) {
                 invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
@@ -101,7 +101,7 @@ public class PreviewProjectHandler {
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
             if (!PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW)) {
                 consumeSelectedFile(myProjectViewPane.getTree(), file -> {
-                    if (PreviewSettings.getInstance().isPreviewClosedOnTabChange() || !PreviewUtil.isPreviewFile(file)) {
+                    if (PreviewSettings.getInstance().isPreviewClosedOnTabChange() || !PreviewUtil.isPreviewed(file)) {
                         closePreviews();
                     }
                 });
@@ -113,7 +113,7 @@ public class PreviewProjectHandler {
         @Override
         public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
             consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> {
-                if (PreviewUtil.isPreviewFile(file) ||
+                if (PreviewUtil.isPreviewed(file) ||
                         (selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW))) {
                     closePreviews();
                 }
@@ -131,12 +131,12 @@ public class PreviewProjectHandler {
         return null;
     }
 
-    public PreviewProjectHandler() {
+    protected PreviewProjectHandler() {
         myTreeKeyListener = new PreviewKeyListener(this);
         myReopenClosedTabAction = ActionManager.getInstance().getAction("ReopenClosedTab");
     }
 
-    public boolean init(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
+    protected boolean init(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
         assert myProject == null : "already initialized";
 
         myProjectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
@@ -156,7 +156,6 @@ public class PreviewProjectHandler {
         // 'false' required to support TAB key in listener - be aware of side effects...
         myProjectViewPane.getTree().setFocusTraversalKeysEnabled(!previewSettings.isQuickNavigationKeyListenerEnabled());
         myProjectViewPane.getTree().setToggleClickCount(previewSettings.isProjectViewToggleOneClick() ? 1 : 2);
-
 
         messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myFileEditorManagerListener);
         messageBusConnection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, myFileEditorManagerBeforeListener);
@@ -190,7 +189,7 @@ public class PreviewProjectHandler {
         }
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         if (!fileEditorManager.isFileOpen(file)) {
-            PreviewUtil.preparePreviewFile(file);
+            PreviewUtil.preparePreview(file);
         }
         invokeSafeAndWait(() -> fileEditorManager.openFile(file, false));
     }
@@ -229,7 +228,7 @@ public class PreviewProjectHandler {
     public void closePreviews() {
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         for (VirtualFile file : fileEditorManager.getOpenFiles()) {
-            if (PreviewUtil.isPreviewFile(file)) {
+            if (PreviewUtil.isPreviewed(file)) {
                 closeFileEditor(file);
             }
         }
@@ -257,6 +256,5 @@ public class PreviewProjectHandler {
     public boolean isValid() {
         return PreviewUtil.isValid(myProject);
     }
-
 
 }

@@ -21,16 +21,15 @@ public final class PreviewUtil {
         @Override
         public void beforeDocumentChange(@NotNull DocumentEvent event) {
             final VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
-            disposePreviewFile(file);
-            // invokeSafe(() -> openFile(file, true));
+            disposePreview(file);
         }
     };
 
-    public static boolean isPreviewFile(VirtualFile file) {
+    public static boolean isPreviewed(VirtualFile file) {
         return file != null && file.getUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY) != null;
     }
 
-    public static void disposePreviewFile(final VirtualFile file) {
+    public static void disposePreview(final VirtualFile file) {
         if (file == null) {
             return;
         }
@@ -44,12 +43,12 @@ public final class PreviewUtil {
         FileDocumentManager.getInstance().getDocument(file).removeDocumentListener(listener);
     }
 
-    public static void preparePreviewFile(final VirtualFile file) {
+    public static void preparePreview(final VirtualFile file) {
         if (file == null) {
             return;
         }
 
-        PreviewUtil.disposePreviewFile(file);
+        PreviewUtil.disposePreview(file);
         file.putUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY, file.getName());
 
         if (!PreviewSettings.getInstance().isOpenEditorOnEditPreview()) {
