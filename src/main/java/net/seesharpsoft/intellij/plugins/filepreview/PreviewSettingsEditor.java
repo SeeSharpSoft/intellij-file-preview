@@ -2,11 +2,13 @@ package net.seesharpsoft.intellij.plugins.filepreview;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.ui.CheckBoxWithColorChooser;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Objects;
 
 public class PreviewSettingsEditor implements SearchableConfigurable {
@@ -20,6 +22,12 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     private JCheckBox cbOpenEditorOnEditPreview;
     private JCheckBox cbPreviewClosedOnTabChange;
     private JCheckBox cbProjectViewOneClickToggle;
+    private CheckBoxWithColorChooser cpPreviewTabColor;
+    private JTextField txtTitlePattern;
+
+    private void createUIComponents() {
+        cpPreviewTabColor = new CheckBoxWithColorChooser("Preview Editor tab color   ");
+    }
 
     @NotNull
     @Override
@@ -47,18 +55,23 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     @Override
     public boolean isModified() {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
+        Color previewTabColor = previewSettings.getPreviewTabColor();
         return isModified(cbClosePreviewOnEmptySelection, previewSettings.isPreviewClosedOnEmptySelection()) ||
                 isModified(cbPreviewClosedOnTabChange, previewSettings.isPreviewClosedOnTabChange()) ||
                 isModified(cbKeyListenerEnabled, previewSettings.isQuickNavigationKeyListenerEnabled()) ||
                 isModified(cbProjectViewFocusSupport, previewSettings.isProjectViewFocusSupport()) ||
                 isModified(cbOpenEditorOnEditPreview, previewSettings.isOpenEditorOnEditPreview()) ||
                 !Objects.equals(sbPreviewBehavior.getSelectedIndex(), previewSettings.getPreviewBehavior().ordinal()) ||
-                isModified(cbProjectViewOneClickToggle, previewSettings.isProjectViewToggleOneClick());
+                isModified(cbProjectViewOneClickToggle, previewSettings.isProjectViewToggleOneClick()) ||
+                !Objects.equals(cpPreviewTabColor.isSelected(), previewTabColor != null) ||
+                !Objects.equals(cpPreviewTabColor.getColor(), previewTabColor) ||
+                !Objects.equals(txtTitlePattern.getText(), previewSettings.getPreviewTabTitlePattern());
     }
 
     @Override
     public void reset() {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
+        Color previewTabColor = previewSettings.getPreviewTabColor();
         cbClosePreviewOnEmptySelection.setSelected(previewSettings.isPreviewClosedOnEmptySelection());
         cbPreviewClosedOnTabChange.setSelected(previewSettings.isPreviewClosedOnTabChange());
         cbKeyListenerEnabled.setSelected(previewSettings.isQuickNavigationKeyListenerEnabled());
@@ -66,11 +79,15 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         cbOpenEditorOnEditPreview.setSelected(previewSettings.isOpenEditorOnEditPreview());
         sbPreviewBehavior.setSelectedIndex(previewSettings.getPreviewBehavior().ordinal());
         cbProjectViewOneClickToggle.setSelected(previewSettings.isProjectViewToggleOneClick());
+        cpPreviewTabColor.setColor(previewTabColor);
+        cpPreviewTabColor.setSelected(previewTabColor != null);
+        txtTitlePattern.setText(previewSettings.getPreviewTabTitlePattern());
     }
 
     @Override
     public void apply() throws ConfigurationException {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
+        Color previewTabColor = cpPreviewTabColor.isSelected() ? cpPreviewTabColor.getColor() : null;
         previewSettings.setPreviewClosedOnEmptySelection(cbClosePreviewOnEmptySelection.isSelected());
         previewSettings.setPreviewClosedOnTabChange(cbPreviewClosedOnTabChange.isSelected());
         previewSettings.setQuickNavigationKeyListenerEnabled(cbKeyListenerEnabled.isSelected());
@@ -78,5 +95,8 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         previewSettings.setOpenEditorOnEditPreview(cbOpenEditorOnEditPreview.isSelected());
         previewSettings.setPreviewBehavior(PreviewSettings.PreviewBehavior.values()[sbPreviewBehavior.getSelectedIndex()]);
         previewSettings.setProjectViewToggleOneClick(cbProjectViewOneClickToggle.isSelected());
+        previewSettings.setPreviewTabColor(previewTabColor);
+        previewSettings.setPreviewTabTitlePattern(txtTitlePattern.getText());
     }
+
 }

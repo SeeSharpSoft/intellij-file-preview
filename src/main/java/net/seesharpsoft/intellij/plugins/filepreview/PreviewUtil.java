@@ -1,10 +1,11 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,49 +18,55 @@ public final class PreviewUtil {
 
     public static final Key<DocumentListener> PREVIEW_DOCUMENT_LISTENER = Key.create(PreviewUtil.class.getName() + "$PREVIEW_DOCUMENT_LISTENER_INSTANCE");
 
-    private static final DocumentListener PREVIEW_DOCUMENT_LISTENER_INSTANCE = new DocumentListener() {
-        @Override
-        public void beforeDocumentChange(@NotNull DocumentEvent event) {
-            final VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
-            disposePreview(file);
-        }
-    };
-
     public static boolean isPreviewed(VirtualFile file) {
         return file != null && file.getUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY) != null;
     }
 
-    public static void disposePreview(final VirtualFile file) {
-        if (file == null) {
-            return;
-        }
-
-        file.putUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY, null);
-        DocumentListener listener = file.getUserData(PREVIEW_DOCUMENT_LISTENER);
-        file.putUserData(PREVIEW_DOCUMENT_LISTENER, null);
-        if (listener == null) {
-            return;
-        }
-        FileDocumentManager.getInstance().getDocument(file).removeDocumentListener(listener);
+    public static void disposePreview(@NotNull final Project project, final VirtualFile file) {
+        disposePreview(project, file, true);
     }
 
-    public static void preparePreview(final VirtualFile file) {
+    public static void disposePreview(@NotNull final Project project, final VirtualFile file, final boolean updateRepresentation) {
         if (file == null) {
             return;
         }
 
-        PreviewUtil.disposePreview(file);
-        file.putUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY, file.getName());
+        TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+            file.putUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY, null);
+            DocumentListener listener = file.getUserData(PREVIEW_DOCUMENT_LISTENER);
+            file.putUserData(PREVIEW_DOCUMENT_LISTENER, null);
+            if (updateRepresentation) {
+                FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file);
+            }
+            if (listener == null) {
+                return;
+            }
+            FileDocumentManager.getInstance().getDocument(file).removeDocumentListener(listener);
+        });
+    }
 
-        if (!PreviewSettings.getInstance().isOpenEditorOnEditPreview()) {
+    public static void preparePreview(@NotNull final Project project, final VirtualFile file) {
+        if (file == null) {
             return;
         }
 
-        Document document = FileDocumentManager.getInstance().getDocument(file);
-        if (document != null) {
-            document.addDocumentListener(PREVIEW_DOCUMENT_LISTENER_INSTANCE);
-            file.putUserData(PREVIEW_DOCUMENT_LISTENER, PREVIEW_DOCUMENT_LISTENER_INSTANCE);
-        }
+        // ensure to remove any previous preview listeners/markers
+        PreviewUtil.disposePreview(project, file, false);
+
+        TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+            file.putUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY, file.getName());
+
+            if (!PreviewSettings.getInstance().isOpenEditorOnEditPreview()) {
+                return;
+            }
+
+            Document document = FileDocumentManager.getInstance().getDocument(file);
+            if (document != null) {
+                DocumentListener documentListener = new PreviewDocumentListener(project);
+                document.addDocumentListener(documentListener);
+                file.putUserData(PREVIEW_DOCUMENT_LISTENER, documentListener);
+            }
+        });
     }
 
     public static void invokeSafeAndWait(Project project, Runnable runnable) {

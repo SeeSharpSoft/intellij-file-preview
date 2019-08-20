@@ -40,7 +40,7 @@ public class PreviewPsiNavigationSupport extends PsiNavigationSupportImpl {
 
         @Override
         public void navigate(boolean requestFocus) {
-            PreviewUtil.disposePreview(myDelegate.getFile());
+            PreviewUtil.disposePreview(myDelegate.getProject(), myDelegate.getFile());
             myDelegate.navigate(requestFocus);
         }
 

@@ -75,7 +75,7 @@ public class PreviewProjectHandler {
             super.mouseClicked(e);
 
             if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-                consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> PreviewUtil.disposePreview(selectedFile));
+                consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> PreviewUtil.disposePreview(myProject, selectedFile));
             }
         }
     };
@@ -90,7 +90,7 @@ public class PreviewProjectHandler {
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            PreviewUtil.disposePreview(file);
+            PreviewUtil.disposePreview(myProject, file);
 
             if (PreviewSettings.getInstance().isProjectViewFocusSupport()) {
                 invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
@@ -189,7 +189,7 @@ public class PreviewProjectHandler {
         }
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         if (!fileEditorManager.isFileOpen(file)) {
-            PreviewUtil.preparePreview(file);
+            PreviewUtil.preparePreview(myProject, file);
         }
         invokeSafeAndWait(() -> fileEditorManager.openFile(file, false));
     }

@@ -35,6 +35,7 @@
         <editorOptionsProvider instance="net.seesharpsoft.intellij.plugins.filepreview.PreviewSettingsEditor"/>
 
         <editorTabTitleProvider implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewEditorTabTitleProvider" order="first" />
+        <editorTabColorProvider implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewEditorTabColorProvider" order="first" />
 
         <applicationService serviceInterface="com.intellij.ide.util.PsiNavigationSupport"
                         serviceImplementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewPsiNavigationSupport"
