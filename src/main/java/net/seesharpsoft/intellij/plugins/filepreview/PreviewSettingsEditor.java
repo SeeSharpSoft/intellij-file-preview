@@ -25,7 +25,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     private CheckBoxWithColorChooser cpPreviewTabColor;
     private JTextField txtTitlePattern;
 
-    private void createUIComponents() {
+    protected void createUIComponents() {
         cpPreviewTabColor = new CheckBoxWithColorChooser("Preview Editor tab color   ");
     }
 
