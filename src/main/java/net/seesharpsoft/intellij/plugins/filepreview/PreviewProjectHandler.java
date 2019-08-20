@@ -6,51 +6,45 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.MessageBusConnection;
-import net.seesharpsoft.intellij.editor.EditorSnapshot;
-import net.seesharpsoft.intellij.editor.EditorSnapshotFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 
 import static net.seesharpsoft.intellij.plugins.filepreview.PreviewSettings.PreviewBehavior.EXPLICIT_PREVIEW;
 
 public class PreviewProjectHandler {
 
+    public static final Key<String> PREVIEW_VIRTUAL_FILE_KEY = Key.create(PreviewProjectHandler.class.getName());
+
     private Project myProject;
-    private PreviewVirtualFile myPreviewFile;
     private AbstractProjectViewPane myProjectViewPane;
     private final AnAction myReopenClosedTabAction;
-    private final KeyListener myKeyListener;
-
-    private final DataContext myComponentDataContext = dataId -> {
-        if (!PlatformDataKeys.CONTEXT_COMPONENT.getName().equals(dataId)) {
-            throw new UnsupportedOperationException(dataId);
-        }
-        return FileEditorManagerEx.getInstanceEx(myProject).getSplitters();
-    };
+    private final KeyListener myTreeKeyListener;
 
     private final PropertyChangeListener mySettingsPropertyChangeListener = evt -> {
         switch (evt.getPropertyName()) {
             case "ProjectViewToggleOneClick":
-                myProjectViewPane.getTree().setToggleClickCount((boolean)evt.getNewValue() ? 1 : 2);
+                myProjectViewPane.getTree().setToggleClickCount((boolean) evt.getNewValue() ? 1 : 2);
                 break;
             case "QuickNavigationKeyListenerEnabled":
-                myProjectViewPane.getTree().setFocusTraversalKeysEnabled(!(boolean)evt.getNewValue());
+                myProjectViewPane.getTree().setFocusTraversalKeysEnabled(!(boolean) evt.getNewValue());
                 break;
             default:
                 // nothing to do yet
@@ -75,19 +69,28 @@ public class PreviewProjectHandler {
         }
     };
 
+    private final MouseListener myTreeMouseListener = new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            super.mouseClicked(e);
+
+            if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+                consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> PreviewUtil.disposePreview(selectedFile));
+            }
+        }
+    };
+
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
         @Override
         public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            if (PreviewSettings.getInstance().isProjectViewFocusSupport() && file instanceof PreviewVirtualFile) {
+            if (PreviewSettings.getInstance().isProjectViewFocusSupport()) {
                 invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
             }
         }
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            if (file instanceof PreviewVirtualFile) {
-                onAfterPreviewFileClosed((PreviewVirtualFile) file);
-            }
+            PreviewUtil.disposePreview(file);
 
             if (PreviewSettings.getInstance().isProjectViewFocusSupport()) {
                 invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
@@ -96,10 +99,10 @@ public class PreviewProjectHandler {
 
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-            if (!PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW) && !(event.getNewProvider() instanceof PreviewEditorProvider)) {
+            if (!PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW)) {
                 consumeSelectedFile(myProjectViewPane.getTree(), file -> {
-                    if (PreviewSettings.getInstance().isPreviewClosedOnTabChange() || !isCurrentlyPreviewed(file)) {
-                        closePreview();
+                    if (PreviewSettings.getInstance().isPreviewClosedOnTabChange() || !PreviewUtil.isPreviewed(file)) {
+                        closePreviews();
                     }
                 });
             }
@@ -109,19 +112,12 @@ public class PreviewProjectHandler {
     private final FileEditorManagerListener.Before myFileEditorManagerBeforeListener = new FileEditorManagerListener.Before() {
         @Override
         public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            if (!(file instanceof PreviewVirtualFile) || !file.equals(myPreviewFile)) {
-                consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> {
-                    if ((selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW)) ||
-                            ((file instanceof PreviewVirtualFile) && !isCurrentlyPreviewed(file)) ||
-                            (!(file instanceof PreviewVirtualFile) && isCurrentlyPreviewed(file))) {
-                        closePreview();
-                    }
-
-                    if (file instanceof PreviewVirtualFile) {
-                        onBeforePreviewFileOpened((PreviewVirtualFile) file);
-                    }
-                });
-            }
+            consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> {
+                if (PreviewUtil.isPreviewed(file) ||
+                        (selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW))) {
+                    closePreviews();
+                }
+            });
         }
     };
 
@@ -135,12 +131,12 @@ public class PreviewProjectHandler {
         return null;
     }
 
-    public PreviewProjectHandler() {
-        myKeyListener = new PreviewKeyListener(this);
+    protected PreviewProjectHandler() {
+        myTreeKeyListener = new PreviewKeyListener(this);
         myReopenClosedTabAction = ActionManager.getInstance().getAction("ReopenClosedTab");
     }
 
-    public boolean init(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
+    protected boolean init(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
         assert myProject == null : "already initialized";
 
         myProjectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
@@ -154,7 +150,9 @@ public class PreviewProjectHandler {
         previewSettings.addPropertyChangeListener(mySettingsPropertyChangeListener);
 
         myProjectViewPane.getTree().addTreeSelectionListener(myTreeSelectionListener);
-        myProjectViewPane.getTree().addKeyListener(myKeyListener);
+        myProjectViewPane.getTree().addKeyListener(myTreeKeyListener);
+        myProjectViewPane.getTree().addMouseListener(myTreeMouseListener);
+
         // 'false' required to support TAB key in listener - be aware of side effects...
         myProjectViewPane.getTree().setFocusTraversalKeysEnabled(!previewSettings.isQuickNavigationKeyListenerEnabled());
         myProjectViewPane.getTree().setToggleClickCount(previewSettings.isProjectViewToggleOneClick() ? 1 : 2);
@@ -168,14 +166,15 @@ public class PreviewProjectHandler {
     public void dispose() {
         assert myProject != null : "not initialized yet";
 
-        closePreview();
+        closePreviews();
 
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         previewSettings.removePropertyChangeListener(mySettingsPropertyChangeListener);
 
         if (myProjectViewPane != null) {
             myProjectViewPane.getTree().removeTreeSelectionListener(myTreeSelectionListener);
-            myProjectViewPane.getTree().removeKeyListener(myKeyListener);
+            myProjectViewPane.getTree().removeKeyListener(myTreeKeyListener);
+            myProjectViewPane.getTree().removeMouseListener(myTreeMouseListener);
         }
 
         myProject = null;
@@ -184,66 +183,15 @@ public class PreviewProjectHandler {
     public void openPreviewOrEditor(VirtualFile file) {
         if (!isValid() || file == null || file.isDirectory() || !file.isValid()) {
             if (PreviewSettings.getInstance().isPreviewClosedOnEmptySelection()) {
-                closePreview();
+                closePreviews();
             }
             return;
         }
-        FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-        final VirtualFile fileToOpen = !fileEditorManager.isFileOpen(file) ? createAndSetPreviewFile(file) : file;
-        if (fileToOpen != null) {
-            invokeSafe(() -> fileEditorManager.openFile(fileToOpen, false));
-        }
-    }
-
-    public boolean isCurrentlyPreviewed(VirtualFile file) {
-        if (!isValid() || file == null || myPreviewFile == null) {
-            return false;
-        }
-        return myPreviewFile.equals(file) || myPreviewFile.getSource().equals(file);
-    }
-
-    public void openFileEditorForPreview(final PreviewVirtualFile file) {
-        if (!isValid() || file == null) {
-            return;
-        }
-        invokeSafe(() -> openFileEditorWithPreviewSnapshot(file));
-    }
-
-    private void openFileEditorWithPreviewSnapshot(final PreviewVirtualFile file) {
-        if (!isCurrentlyPreviewed(file)) {
-            return;
-        }
-        final VirtualFile fileToOpen = file.getSource();
-        final List<EditorSnapshot> editorSnapshots = getEditorsSnapshots(file);
-        closePreview();
-        invokeSafe(() -> openFileEditorWithPreviewSnapshot(fileToOpen, editorSnapshots));
-    }
-
-    private void openFileEditorWithPreviewSnapshot(final VirtualFile file, final List<EditorSnapshot> editorSnapshots) {
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-        final FileEditor[] targetFileEditors = fileEditorManager.openFile(file, true);
-        for (FileEditor fileEditor : targetFileEditors) {
-            EditorSnapshot editorSnapshot = editorSnapshots.stream()
-                    .filter(snapshot -> snapshot.accepts(fileEditor))
-                    .findFirst().orElse(null);
-            if (editorSnapshot != null) {
-                editorSnapshot.apply(fileEditor);
-            }
+        if (!fileEditorManager.isFileOpen(file)) {
+            PreviewUtil.preparePreview(file);
         }
-    }
-
-    @NotNull
-    private List<EditorSnapshot> getEditorsSnapshots(final VirtualFile file) {
-        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-        final FileEditor[] sourceFileEditors = fileEditorManager.getEditors(file);
-        final List<EditorSnapshot> editorSnapshots = new ArrayList<>();
-        for (FileEditor fileEditor : sourceFileEditors) {
-            EditorSnapshot editorSnapshot = EditorSnapshotFactory.getInstance().create(fileEditor);
-            if (editorSnapshot != null) {
-                editorSnapshots.add(editorSnapshot);
-            }
-        }
-        return editorSnapshots;
+        invokeSafeAndWait(() -> fileEditorManager.openFile(file, false));
     }
 
     public void consumeSelectedFile(final Component tree, Consumer<VirtualFile> consumer) {
@@ -265,7 +213,7 @@ public class PreviewProjectHandler {
             return;
         }
 
-        FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
+        final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
         closeFileEditor(fileEditorManager.getCurrentFile());
     }
 
@@ -273,100 +221,40 @@ public class PreviewProjectHandler {
         if (!isValid() || file == null) {
             return;
         }
-        if (myPreviewFile != null && myPreviewFile.getSource().equals(file)) {
-            closePreview();
-        } else {
-            FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
-            invokeSafe(() -> fileEditorManager.closeFile(file, false, true));
-        }
+        final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
+        invokeSafeAndWait(() -> fileEditorManager.closeFile(file));
     }
 
-    public void closePreview() {
-        if (!isValid() || myPreviewFile == null) {
-            return;
+    public void closePreviews() {
+        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+        for (VirtualFile file : fileEditorManager.getOpenFiles()) {
+            if (PreviewUtil.isPreviewed(file)) {
+                closeFileEditor(file);
+            }
         }
-
-        final PreviewVirtualFile closingPreviewFile = myPreviewFile;
-        myPreviewFile = null;
-        disposePreviewFile(closingPreviewFile);
-        FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
-        invokeSafeAndWait(() -> fileEditorManager.closeFile(closingPreviewFile, false, true));
     }
 
     public void focusFileEditor(VirtualFile file, boolean focusEditor) {
         if (!isValid() || file == null) {
             return;
         }
-        final VirtualFile fileToFocus = myPreviewFile != null && myPreviewFile.getSource().equals(file) ? myPreviewFile : file;
-        FileEditorManagerImpl fileEditorManager = (FileEditorManagerImpl) FileEditorManager.getInstance(myProject);
-        if (fileToFocus == null || !fileEditorManager.isFileOpen(fileToFocus)) {
+        final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
+        if (!fileEditorManager.isFileOpen(file)) {
             return;
         }
-        invokeSafe(() -> fileEditorManager.openFile(fileToFocus, focusEditor));
-    }
-
-    public VirtualFile createAndSetPreviewFile(VirtualFile file) {
-        if (!isValid()) {
-            return null;
-        }
-
-        if (myPreviewFile != null && myPreviewFile.getSource().equals(file)) {
-            return myPreviewFile;
-        }
-        return new PreviewVirtualFile(file);
+        invokeSafe(() -> fileEditorManager.openFile(file, focusEditor));
     }
 
     public void invokeSafeAndWait(Runnable runnable) {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-            if (isValid()) {
-                runnable.run();
-            }
-        });
+        PreviewUtil.invokeSafeAndWait(myProject, runnable);
     }
 
     public void invokeSafe(Runnable runnable) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-            if (isValid()) {
-                runnable.run();
-            }
-        });
+        PreviewUtil.invokeSafe(myProject, runnable);
     }
 
     public boolean isValid() {
-        return myProject != null && !myProject.isDisposed();
+        return PreviewUtil.isValid(myProject);
     }
 
-    protected void disposePreviewFile(PreviewVirtualFile previewFile) {
-        PreviewFileListener listener = previewFile.getUserData(PreviewFileListener.PREVIEW_FILE_LISTENER);
-
-        if (listener == null) {
-            return;
-        }
-
-        FileDocumentManager.getInstance().getDocument(previewFile.getSource()).removeDocumentListener(listener);
-    }
-
-    protected void onBeforePreviewFileOpened(PreviewVirtualFile previewFile) {
-        myPreviewFile = previewFile;
-        if (!PreviewSettings.getInstance().isOpenEditorOnEditPreview()) {
-            return;
-        }
-
-        invokeSafe(() -> {
-            Document document = FileDocumentManager.getInstance().getDocument(previewFile.getSource());
-            if (document != null) {
-                PreviewFileListener listener = new PreviewFileListener(this, previewFile);
-                previewFile.putUserData(PreviewFileListener.PREVIEW_FILE_LISTENER, listener);
-                document.addDocumentListener(listener);
-            }
-        });
-    }
-
-    protected void onAfterPreviewFileClosed(PreviewVirtualFile previewFile) {
-        // Preview files are not supposed to be part of the "closed tabs" stack - therefore remove them by executing the action
-        // => a preview can not be restored, but it is removed from stack
-        if (myReopenClosedTabAction != null && previewFile != null) {
-            invokeSafe(() -> myReopenClosedTabAction.actionPerformed(AnActionEvent.createFromDataContext("Editor", null, myComponentDataContext)));
-        }
-    }
 }

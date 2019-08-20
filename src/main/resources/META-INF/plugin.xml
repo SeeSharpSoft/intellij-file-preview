@@ -29,10 +29,17 @@
     <idea-version since-build="182.5262.2" />
 
     <extensions defaultExtensionNs="com.intellij">
-        <fileEditorProvider implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewEditorProvider" />
-        <postStartupActivity implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewStartupActivity" />
+        <postStartupActivity implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewStartupActivity" order="first" />
 
         <applicationService serviceImplementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewSettings"/>
         <editorOptionsProvider instance="net.seesharpsoft.intellij.plugins.filepreview.PreviewSettingsEditor"/>
+
+        <editorTabTitleProvider implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewEditorTabTitleProvider" order="first" />
+
+        <applicationService serviceInterface="com.intellij.ide.util.PsiNavigationSupport"
+                        serviceImplementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewPsiNavigationSupport"
+                        overrides="true"
+                        order="last"
+        />
     </extensions>
 </idea-plugin>

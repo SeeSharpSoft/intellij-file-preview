@@ -67,6 +67,7 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     public boolean isPreviewClosedOnEmptySelection() {
         return getState().CLOSE_PREVIEW_ON_EMPTY_SELECTION;
     }
+
     public void setPreviewClosedOnEmptySelection(boolean previewClosedOnEmptySelection) {
         getState().CLOSE_PREVIEW_ON_EMPTY_SELECTION = previewClosedOnEmptySelection;
     }
@@ -74,6 +75,7 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     public boolean isPreviewClosedOnTabChange() {
         return getState().CLOSE_PREVIEW_ON_TAB_CHANGE;
     }
+
     public void setPreviewClosedOnTabChange(boolean previewClosedOnTabChange) {
         getState().CLOSE_PREVIEW_ON_TAB_CHANGE = previewClosedOnTabChange;
     }
@@ -81,6 +83,7 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     public boolean isQuickNavigationKeyListenerEnabled() {
         return getState().QUICK_NAVIGATION_KEY_LISTENER_ENABLED;
     }
+
     public void setQuickNavigationKeyListenerEnabled(boolean quickNavigationKeyListenerEnabled) {
         boolean oldValue = getState().QUICK_NAVIGATION_KEY_LISTENER_ENABLED;
         getState().QUICK_NAVIGATION_KEY_LISTENER_ENABLED = quickNavigationKeyListenerEnabled;
@@ -90,6 +93,7 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     public boolean isProjectViewFocusSupport() {
         return getState().PROJECT_VIEW_FOCUS_SUPPORT;
     }
+
     public void setProjectViewFocusSupport(boolean projectViewFocusSupport) {
         getState().PROJECT_VIEW_FOCUS_SUPPORT = projectViewFocusSupport;
     }
@@ -97,6 +101,7 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     public boolean isOpenEditorOnEditPreview() {
         return getState().OPEN_EDITOR_ON_EDIT_PREVIEW;
     }
+
     public void setOpenEditorOnEditPreview(boolean openEditorOnEditPreview) {
         getState().OPEN_EDITOR_ON_EDIT_PREVIEW = openEditorOnEditPreview;
     }
@@ -104,6 +109,7 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     public PreviewBehavior getPreviewBehavior() {
         return getState().PREVIEW_BEHAVIOR;
     }
+
     public void setPreviewBehavior(PreviewBehavior previewBehavior) {
         getState().PREVIEW_BEHAVIOR = previewBehavior;
     }
@@ -111,6 +117,7 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
     public boolean isProjectViewToggleOneClick() {
         return getState().PROJECT_VIEW_TOGGLE_ONE_CLICK;
     }
+
     public void setProjectViewToggleOneClick(boolean projectViewToggleOneClick) {
         boolean oldValue = getState().PROJECT_VIEW_TOGGLE_ONE_CLICK;
         getState().PROJECT_VIEW_TOGGLE_ONE_CLICK = projectViewToggleOneClick;
