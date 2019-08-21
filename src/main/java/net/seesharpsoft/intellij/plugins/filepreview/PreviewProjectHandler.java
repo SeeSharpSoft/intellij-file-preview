@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
@@ -99,10 +100,10 @@ public class PreviewProjectHandler {
 
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-            if (!PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW)) {
+            if (!PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW) && !PreviewUtil.isPreviewed(event.getNewFile())) {
                 consumeSelectedFile(myProjectViewPane.getTree(), file -> {
                     if (PreviewSettings.getInstance().isPreviewClosedOnTabChange() || !PreviewUtil.isPreviewed(file)) {
-                        closePreviews();
+                        closeAllPreviews();
                     }
                 });
             }
@@ -115,7 +116,7 @@ public class PreviewProjectHandler {
             consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> {
                 if (PreviewUtil.isPreviewed(file) ||
                         (selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW))) {
-                    closePreviews();
+                    closeOtherPreviews(file);
                 }
             });
         }
@@ -166,7 +167,7 @@ public class PreviewProjectHandler {
     public void dispose() {
         assert myProject != null : "not initialized yet";
 
-        closePreviews();
+        closeAllPreviews();
 
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         previewSettings.removePropertyChangeListener(mySettingsPropertyChangeListener);
@@ -183,7 +184,7 @@ public class PreviewProjectHandler {
     public void openPreviewOrEditor(VirtualFile file) {
         if (!isValid() || file == null || file.isDirectory() || !file.isValid()) {
             if (PreviewSettings.getInstance().isPreviewClosedOnEmptySelection()) {
-                closePreviews();
+                closeAllPreviews();
             }
             return;
         }
@@ -225,10 +226,14 @@ public class PreviewProjectHandler {
         invokeSafeAndWait(() -> fileEditorManager.closeFile(file));
     }
 
-    public void closePreviews() {
+    public void closeAllPreviews() {
+        closeOtherPreviews(null);
+    }
+
+    public void closeOtherPreviews(@Nullable final VirtualFile currentPreview) {
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
         for (VirtualFile file : fileEditorManager.getOpenFiles()) {
-            if (PreviewUtil.isPreviewed(file)) {
+            if (PreviewUtil.isPreviewed(file) && !file.equals(currentPreview)) {
                 closeFileEditor(file);
             }
         }
