@@ -26,7 +26,7 @@ public final class PreviewUtil {
         disposePreview(project, file, true);
     }
 
-    public static void disposePreview(@NotNull final Project project, final VirtualFile file, final boolean updateRepresentation) {
+    public static synchronized void disposePreview(@NotNull final Project project, final VirtualFile file, final boolean updateRepresentation) {
         if (file == null) {
             return;
         }
@@ -45,13 +45,10 @@ public final class PreviewUtil {
         });
     }
 
-    public static void preparePreview(@NotNull final Project project, final VirtualFile file) {
-        if (file == null) {
+    public static synchronized void preparePreview(@NotNull final Project project, final VirtualFile file) {
+        if (file == null || isPreviewed(file)) {
             return;
         }
-
-        // ensure to remove any previous preview listeners/markers
-        PreviewUtil.disposePreview(project, file, false);
 
         TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
             file.putUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY, file.getName());

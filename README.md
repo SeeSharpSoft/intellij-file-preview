@@ -16,7 +16,8 @@ This plugin enables a quick file preview on simple selecting files in Project Vi
 
 - show preview (open temporary editor) of selected file
 - focus editor of selected file if already opened
-- settings page to individualize preview behavior  
+- settings page to individualize preview behavior
+- customize the editor tab representation (title & color)
 
 **Please note:** If **[Autoscroll to source](https://www.jetbrains.com/help/idea/navigating-through-the-source-code.html#scroll_to_from_source)** is enabled, the actual editor is opened instead of a preview.
 This is the intended and unchanged behavior. To make proper use of the Preview Tab, **this option must be disabled!**
@@ -27,27 +28,21 @@ This plugin is fresh like a mild breeze in summer - please contribute issues, id
 
 ## Settings (*defaults*)
 
-### Preview behavior
+### Project View
+
+#### Preview behavior
 
 Defines when the Preview Editor tab should be shown in general. 
 
-#### Auto preview on select *(default)*
+##### Auto preview on select *(default)*
 
 Whenever the focused file in the Project View changes, a preview is shown or the already existing editor is focused. 
 
-#### Manual preview
+##### Manual preview
 
 Whenever the focused file in the Project View changes, the already existing editor is focused. The Preview Editor tab is only shown when pressing \<SPACE>. The preview stays open on further navigation and must also be closed manually.
 
-### Close Preview Editor tab if no file is selected (*enabled*)
-
-Switching the focus in the Project View to an directory or non-displayable element, the preview is closed. Disable to keep the last Preview Editor tab.
-
-### Close Preview Editor tab if other tab is selected (*disabled*)
-
-Switching editor tabs does not close the current Preview Editor tab on default.
-
-### Enable quick navigation key events (*disabled*)
+#### Enable quick navigation key events (*disabled*)
 
 Additional key commands will be activated (when Project View is focused):
 
@@ -57,17 +52,37 @@ Additional key commands will be activated (when Project View is focused):
 
 **Note:** The preview tab will always be closed on \<ESC>, even if the this option is disabled.
 
-### Focus Project View after opening/closing file editor (*enabled*)
+#### Focus Project View after opening/closing file editor (*enabled*)
 
 Grab/keep focus on Project View (instead of focusing editor) when opening or closing a file.
 
-### Open actual editor when editing preview (Preview Editor tab gets closed) (*enabled*)
-
-If activated, the Preview Editor tab is closed and the actual editor is opened when a change happened during preview. This causes a tiny input interruption. If deactivated, the Preview Editor tab stays open while editing, the actual editor is only opened on explicit \<DOUBLE-CLICK> or \<ENTER>.
-
-### Toggle tree expand/collapse by single click (*enabled*)
+#### Toggle tree expand/collapse by single click (*enabled*)
 
 Defines the required number of clicks to expand/collapse a node in Project View tree: one click if option is *enabled* (plugin default), two clicks if option is *disabled* (IDE default).
+
+### Preview Editor Tab
+
+#### Tab title pattern (*<<%s>>*)
+
+Defines how the file name is formatted in the preview tab title, while **%s** represents the filename. Leaving the field blank will show the title like for usual editor tabs. Tab coloring can be used to distinguish.
+
+#### Tab color (*disabled*)
+
+Sets a custom background color for the preview tab.
+
+#### Close tab if no file is selected (*enabled*)
+
+Switching the focus in the Project View to an directory or non-displayable element, the preview is closed. Disable to keep the last Preview Editor tab.
+
+#### Close tab if other tab is selected (*disabled*)
+
+Switching editor tabs does not close the current Preview Editor tab on default.
+
+#### Convert to default editor tab when editing previewed content (*enabled*)
+
+If activated, the tab becomes a normal editor tab when a change happened during preview, so it will stay open if another file gets selected.
+
+**Please note:** A default editor tab can always be enforced by \<DOUBLE-CLICK> or \<ENTER> on the file in Project View.
 
 ## Installation
 
