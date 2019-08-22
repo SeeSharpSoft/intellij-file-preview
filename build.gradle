@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.4.2'
+version '1.4.3'
 
 sourceCompatibility = 1.8
 
@@ -35,6 +35,7 @@ patchPluginXml {
 [FIX] Show file/class Structure details while in preview #25
 [FIX] Typing in a file to open file in Preview in full Editor feature is a little off #27
 [FIX] Strange behavior when "Preferences/Editor/General/Editor Tabs => Open declaration source in the same tab" enabled #29
+[FIX] java.lang.Throwable: Can't remove document listener #37
 </pre>
       """
 }
