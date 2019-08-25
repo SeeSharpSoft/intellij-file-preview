@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.4.3'
+version '1.4.4'
 
 sourceCompatibility = 1.8
 
@@ -40,8 +40,7 @@ patchPluginXml {
       """
 }
 publishPlugin {
-    username = System.getenv().getOrDefault('JI_USER', '')
-    password = System.getenv().getOrDefault('JI_PASSWORD', '')
+    token = System.getenv().getOrDefault('JI_TOKEN', '')
     channels = [System.getenv().getOrDefault('JI_CHANNELS', 'Testing')]
 }
 

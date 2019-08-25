@@ -1,7 +1,6 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -26,44 +25,37 @@ public final class PreviewUtil {
         disposePreview(project, file, true);
     }
 
-    public static synchronized void disposePreview(@NotNull final Project project, final VirtualFile file, final boolean updateRepresentation) {
-        if (file == null) {
+    public static void disposePreview(@NotNull final Project project, final VirtualFile file, final boolean updateRepresentation) {
+        if (!isValid(project) || file == null) {
             return;
         }
 
-        TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
-            file.putUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY, null);
-            DocumentListener listener = file.getUserData(PREVIEW_DOCUMENT_LISTENER);
-            file.putUserData(PREVIEW_DOCUMENT_LISTENER, null);
-            if (updateRepresentation) {
-                FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file);
-            }
-            if (listener == null) {
-                return;
-            }
-            FileDocumentManager.getInstance().getDocument(file).removeDocumentListener(listener);
-        });
+        file.putUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY, null);
+        final DocumentListener documentListener = file.getUserData(PREVIEW_DOCUMENT_LISTENER);
+        file.putUserData(PREVIEW_DOCUMENT_LISTENER, null);
+        if (documentListener != null) {
+            FileDocumentManager.getInstance().getDocument(file).removeDocumentListener(documentListener);
+        }
+        if (updateRepresentation) {
+            FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file);
+        }
     }
 
-    public static synchronized void preparePreview(@NotNull final Project project, final VirtualFile file) {
-        if (file == null || isPreviewed(file)) {
+    public static void preparePreview(@NotNull final Project project, final VirtualFile file) {
+        if (isValid(project) && (file == null || isPreviewed(file))) {
             return;
         }
 
-        TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
-            file.putUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY, file.getName());
+        file.putUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY, file.getName());
 
-            if (!PreviewSettings.getInstance().isOpenEditorOnEditPreview()) {
-                return;
-            }
-
+        if (PreviewSettings.getInstance().isOpenEditorOnEditPreview()) {
             Document document = FileDocumentManager.getInstance().getDocument(file);
             if (document != null) {
                 DocumentListener documentListener = new PreviewDocumentListener(project);
                 document.addDocumentListener(documentListener);
                 file.putUserData(PREVIEW_DOCUMENT_LISTENER, documentListener);
             }
-        });
+        }
     }
 
     public static void invokeSafeAndWait(Project project, Runnable runnable) {

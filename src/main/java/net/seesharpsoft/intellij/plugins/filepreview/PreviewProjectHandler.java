@@ -91,8 +91,6 @@ public class PreviewProjectHandler {
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            PreviewUtil.disposePreview(myProject, file);
-
             if (PreviewSettings.getInstance().isProjectViewFocusSupport()) {
                 invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
             }
@@ -119,6 +117,11 @@ public class PreviewProjectHandler {
                     closeOtherPreviews(file);
                 }
             });
+        }
+
+        @Override
+        public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+            invokeSafe(() -> PreviewUtil.disposePreview(myProject, file));
         }
     };
 
