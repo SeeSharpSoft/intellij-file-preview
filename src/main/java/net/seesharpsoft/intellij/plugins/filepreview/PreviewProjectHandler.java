@@ -15,7 +15,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +36,6 @@ public class PreviewProjectHandler {
 
     private Project myProject;
     private AbstractProjectViewPane myProjectViewPane;
-    private final AnAction myReopenClosedTabAction;
     private final KeyListener myTreeKeyListener;
 
     private final PropertyChangeListener mySettingsPropertyChangeListener = evt -> {
@@ -139,7 +137,6 @@ public class PreviewProjectHandler {
 
     protected PreviewProjectHandler() {
         myTreeKeyListener = new PreviewKeyListener(this);
-        myReopenClosedTabAction = ActionManager.getInstance().getAction("ReopenClosedTab");
     }
 
     protected boolean init(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
