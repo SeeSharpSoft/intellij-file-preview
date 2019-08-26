@@ -36,7 +36,6 @@ public class PreviewProjectHandler {
 
     private Project myProject;
     private AbstractProjectViewPane myProjectViewPane;
-    private final AnAction myReopenClosedTabAction;
     private final KeyListener myTreeKeyListener;
 
     private final PropertyChangeListener mySettingsPropertyChangeListener = evt -> {
@@ -77,6 +76,7 @@ public class PreviewProjectHandler {
 
             if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
                 consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> PreviewUtil.disposePreview(myProject, selectedFile));
+                invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
             }
         }
     };
@@ -137,7 +137,6 @@ public class PreviewProjectHandler {
 
     protected PreviewProjectHandler() {
         myTreeKeyListener = new PreviewKeyListener(this);
-        myReopenClosedTabAction = ActionManager.getInstance().getAction("ReopenClosedTab");
     }
 
     protected boolean init(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
