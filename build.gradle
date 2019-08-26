@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.4.4'
+version '1.4.5'
 
 sourceCompatibility = 1.8
 

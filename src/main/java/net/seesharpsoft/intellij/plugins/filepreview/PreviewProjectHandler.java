@@ -15,6 +15,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +78,7 @@ public class PreviewProjectHandler {
 
             if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
                 consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> PreviewUtil.disposePreview(myProject, selectedFile));
+                invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
             }
         }
     };
