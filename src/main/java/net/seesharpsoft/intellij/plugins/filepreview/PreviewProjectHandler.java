@@ -3,7 +3,9 @@ package net.seesharpsoft.intellij.plugins.filepreview;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -53,30 +55,25 @@ public class PreviewProjectHandler {
     };
 
     private final TreeSelectionListener myTreeSelectionListener = treeSelectionEvent -> {
-        switch (PreviewSettings.getInstance().getPreviewBehavior()) {
-            case PREVIEW_BY_DEFAULT:
-                consumeSelectedFile((Component) treeSelectionEvent.getSource(), file -> {
-                    openPreviewOrEditor(file);
-                });
-                break;
-            case EXPLICIT_PREVIEW:
-                consumeSelectedFile((Component) treeSelectionEvent.getSource(), file -> {
-                    focusFileEditor(file, false);
-                });
-                break;
-            default:
-                throw new UnsupportedOperationException(String.format("case '%s' not handled", PreviewSettings.getInstance().getPreviewBehavior()));
-        }
+        openOrFocusSelectedFile((Component) treeSelectionEvent.getSource());
     };
 
     private final MouseListener myTreeMouseListener = new MouseAdapter() {
         @Override
-        public void mouseClicked(MouseEvent e) {
-            super.mouseClicked(e);
+        public void mouseClicked(MouseEvent mouseEvent) {
+            super.mouseClicked(mouseEvent);
 
-            if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-                consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> PreviewUtil.disposePreview(myProject, selectedFile));
-                invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
+            switch (mouseEvent.getClickCount()) {
+                case 1:
+                    // one-click behavior is handled by myTreeSelectionListener
+                    break;
+                case 2:
+                    if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
+                        consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> PreviewUtil.disposePreview(myProject, selectedFile));
+                    }
+                    break;
+                default:
+                    break;
             }
         }
     };
@@ -181,6 +178,27 @@ public class PreviewProjectHandler {
         }
 
         myProject = null;
+    }
+
+    public void openOrFocusSelectedFile(final Component component) {
+        // "Open declaration source in the same tab" is focus based (#29) - ensure that component has focus
+        component.requestFocus();
+        invokeSafe(() -> {
+            switch (PreviewSettings.getInstance().getPreviewBehavior()) {
+                case PREVIEW_BY_DEFAULT:
+                    consumeSelectedFile(component, file -> {
+                        openPreviewOrEditor(file);
+                    });
+                    break;
+                case EXPLICIT_PREVIEW:
+                    consumeSelectedFile(component, file -> {
+                        focusFileEditor(file, false);
+                    });
+                    break;
+                default:
+                    throw new UnsupportedOperationException(String.format("case '%s' not handled", PreviewSettings.getInstance().getPreviewBehavior()));
+            }
+        });
     }
 
     public void openPreviewOrEditor(VirtualFile file) {
