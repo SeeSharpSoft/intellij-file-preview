@@ -31,11 +31,14 @@ public final class PreviewUtil {
         }
 
         file.putUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY, null);
-        final DocumentListener documentListener = file.getUserData(PREVIEW_DOCUMENT_LISTENER);
-        file.putUserData(PREVIEW_DOCUMENT_LISTENER, null);
+
+        final Document document = FileDocumentManager.getInstance().getDocument(file);
+        final DocumentListener documentListener = document == null ? null : document.getUserData(PREVIEW_DOCUMENT_LISTENER);
         if (documentListener != null) {
-            FileDocumentManager.getInstance().getDocument(file).removeDocumentListener(documentListener);
+            document.putUserData(PREVIEW_DOCUMENT_LISTENER, null);
+            document.removeDocumentListener(documentListener);
         }
+
         if (updateRepresentation) {
             FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file);
         }
@@ -53,7 +56,7 @@ public final class PreviewUtil {
             if (document != null) {
                 DocumentListener documentListener = new PreviewDocumentListener(project);
                 document.addDocumentListener(documentListener);
-                file.putUserData(PREVIEW_DOCUMENT_LISTENER, documentListener);
+                document.putUserData(PREVIEW_DOCUMENT_LISTENER, documentListener);
             }
         }
     }
