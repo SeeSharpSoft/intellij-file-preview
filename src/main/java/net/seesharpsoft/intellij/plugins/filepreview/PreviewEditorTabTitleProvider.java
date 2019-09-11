@@ -12,7 +12,7 @@ public class PreviewEditorTabTitleProvider implements EditorTabTitleProvider {
     public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
         String title = null;
         if (PreviewUtil.isPreviewed(file)) {
-            title = String.format(PreviewSettings.getInstance().getPreviewTabTitlePattern(), file.getName());
+            title = String.format(PreviewSettings.getInstance().getPreviewTabTitlePattern(), file.getPresentableName());
         }
         return title == null || title.isEmpty() ? null : title;
     }
