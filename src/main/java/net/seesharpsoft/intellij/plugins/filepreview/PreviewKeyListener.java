@@ -28,13 +28,13 @@ public class PreviewKeyListener implements KeyListener {
                 }
                 break;
             case KeyEvent.VK_SPACE:
-                myPreviewProjectHandler.consumeSelectedFile((Component) e.getSource(), file -> {
+                PreviewUtil.consumeSelectedFile((Component) e.getSource(), file -> {
                     myPreviewProjectHandler.openPreviewOrEditor(file);
                 });
                 break;
             case KeyEvent.VK_TAB:
                 if (PreviewSettings.getInstance().isQuickNavigationKeyListenerEnabled()) {
-                    myPreviewProjectHandler.consumeSelectedFile((Component) e.getSource(), file -> {
+                    PreviewUtil.consumeSelectedFile((Component) e.getSource(), file -> {
                         myPreviewProjectHandler.focusFileEditor(file, true);
                     });
                 }

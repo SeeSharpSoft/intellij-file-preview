@@ -17,6 +17,6 @@ public class PreviewDocumentListener implements DocumentListener {
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
         final VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
-        PreviewUtil.disposePreview(myProject, file);
+        PreviewUtil.setStateOpened(myProject, file);
     }
 }
