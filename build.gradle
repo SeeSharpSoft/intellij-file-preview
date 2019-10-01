@@ -21,9 +21,10 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version System.getenv().getOrDefault('IDEA_VERSION', 'IC-191.5701.16')
+    version System.getenv().getOrDefault('IDEA_VERSION', 'IC-192.5728.98')
     updateSinceUntilBuild false
     instrumentCode true
+    downloadSources true
 }
 patchPluginXml {
     changeNotes """

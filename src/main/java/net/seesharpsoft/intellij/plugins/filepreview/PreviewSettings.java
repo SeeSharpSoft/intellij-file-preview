@@ -29,7 +29,7 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
         public boolean CLOSE_PREVIEW_ON_EMPTY_SELECTION = true;
         public boolean CLOSE_PREVIEW_ON_TAB_CHANGE = false;
         public boolean QUICK_NAVIGATION_KEY_LISTENER_ENABLED = false;
-        public boolean PROJECT_VIEW_FOCUS_SUPPORT = true;
+        public boolean PROJECT_VIEW_FOCUS_SUPPORT = false;
         public boolean OPEN_EDITOR_ON_EDIT_PREVIEW = true;
         public PreviewBehavior PREVIEW_BEHAVIOR = PreviewBehavior.PREVIEW_BY_DEFAULT;
         public boolean PROJECT_VIEW_TOGGLE_ONE_CLICK = true;
