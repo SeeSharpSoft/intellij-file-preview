@@ -1,5 +1,6 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -8,6 +9,8 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
 public final class PreviewUtil {
@@ -17,7 +20,7 @@ public final class PreviewUtil {
 
     public static final Key<DocumentListener> PREVIEW_DOCUMENT_LISTENER = Key.create(PreviewUtil.class.getName() + "$PREVIEW_DOCUMENT_LISTENER_INSTANCE");
 
-    public static boolean isPreviewed(VirtualFile file) {
+    public static boolean isPreviewed(final VirtualFile file) {
         return file != null && file.getUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY) != null;
     }
 
@@ -59,6 +62,18 @@ public final class PreviewUtil {
                 document.putUserData(PREVIEW_DOCUMENT_LISTENER, documentListener);
             }
         }
+    }
+
+    public static VirtualFile getGotoFile(final Project project, final VirtualFile file) {
+        PsiElement element = PsiManager.getInstance(project).findFile(file);
+        if (element != null) {
+            PsiElement navElement = element.getNavigationElement();
+            navElement = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, navElement);
+            if (navElement != null && navElement.getContainingFile() != null) {
+                return navElement.getContainingFile().getVirtualFile();
+            }
+        }
+        return file;
     }
 
     public static void invokeSafeAndWait(Project project, Runnable runnable) {

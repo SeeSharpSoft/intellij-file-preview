@@ -69,7 +69,7 @@ public class PreviewProjectHandler {
                     break;
                 case 2:
                     if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
-                        consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> PreviewUtil.disposePreview(myProject, selectedFile));
+                        consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> PreviewUtil.disposePreview(myProject, PreviewUtil.getGotoFile(myProject, selectedFile)));
                     }
                     break;
                 default:
@@ -81,16 +81,12 @@ public class PreviewProjectHandler {
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
         @Override
         public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            if (PreviewSettings.getInstance().isProjectViewFocusSupport()) {
-                invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
-            }
+            focusProjectViewTreeIfNeeded();
         }
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            if (PreviewSettings.getInstance().isProjectViewFocusSupport()) {
-                invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
-            }
+            focusProjectViewTreeIfNeeded();
         }
 
         @Override
@@ -180,19 +176,44 @@ public class PreviewProjectHandler {
         myProject = null;
     }
 
+    protected boolean shouldProjectViewTreeFocused() {
+        ProjectView projectView = ProjectView.getInstance(myProject);
+        return PreviewSettings.getInstance().isProjectViewFocusSupport() && !projectView.isAutoscrollFromSource(projectView.getCurrentViewId());
+    }
+
+    protected void focusProjectViewTreeIfNeeded() {
+        if (shouldProjectViewTreeFocused()) {
+            invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
+        }
+    }
+
+    protected void focusComponentIfSelectedFileIsNotOpen(final Component component) {
+        consumeSelectedFile(component, selectedFile -> {
+            if (selectedFile == null) {
+                return;
+            }
+            final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
+            final VirtualFile gotoFile = PreviewUtil.getGotoFile(myProject, selectedFile);
+            if (gotoFile != null && !fileEditorManager.isFileOpen(gotoFile)) {
+                component.requestFocus();
+            }
+        });
+    }
+
     public void openOrFocusSelectedFile(final Component component) {
-        // "Open declaration source in the same tab" is focus based (#29) - ensure that component has focus
-        component.requestFocus();
+        // - "Open declaration source in the same tab" is focus based (#29) - ensure that component has focus
+        // - "Autoscroll from Source" triggers this function as well when switching tabs (#44) - focus shouldn't change
+        focusComponentIfSelectedFileIsNotOpen(component);
         invokeSafe(() -> {
             switch (PreviewSettings.getInstance().getPreviewBehavior()) {
                 case PREVIEW_BY_DEFAULT:
                     consumeSelectedFile(component, file -> {
-                        openPreviewOrEditor(file);
+                        openPreviewOrEditor(PreviewUtil.getGotoFile(myProject, file));
                     });
                     break;
                 case EXPLICIT_PREVIEW:
                     consumeSelectedFile(component, file -> {
-                        focusFileEditor(file, false);
+                        focusFileEditor(PreviewUtil.getGotoFile(myProject, file), false);
                     });
                     break;
                 default:
@@ -201,7 +222,7 @@ public class PreviewProjectHandler {
         });
     }
 
-    public void openPreviewOrEditor(VirtualFile file) {
+    public void openPreviewOrEditor(final VirtualFile file) {
         if (!isValid() || file == null || file.isDirectory() || !file.isValid()) {
             if (PreviewSettings.getInstance().isPreviewClosedOnEmptySelection()) {
                 closeAllPreviews();
@@ -281,5 +302,4 @@ public class PreviewProjectHandler {
     public boolean isValid() {
         return PreviewUtil.isValid(myProject);
     }
-
 }
