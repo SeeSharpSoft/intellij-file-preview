@@ -81,16 +81,12 @@ public class PreviewProjectHandler {
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
         @Override
         public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            if (PreviewSettings.getInstance().isProjectViewFocusSupport()) {
-                invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
-            }
+            focusProjectViewTreeIfNeeded();
         }
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            if (PreviewSettings.getInstance().isProjectViewFocusSupport()) {
-                invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
-            }
+            focusProjectViewTreeIfNeeded();
         }
 
         @Override
@@ -178,6 +174,17 @@ public class PreviewProjectHandler {
         }
 
         myProject = null;
+    }
+
+    protected boolean shouldProjectViewTreeFocused() {
+        ProjectView projectView = ProjectView.getInstance(myProject);
+        return PreviewSettings.getInstance().isProjectViewFocusSupport() && !projectView.isAutoscrollFromSource(projectView.getCurrentViewId());
+    }
+
+    protected void focusProjectViewTreeIfNeeded() {
+        if (shouldProjectViewTreeFocused()) {
+            invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
+        }
     }
 
     protected void focusComponentIfSelectedFileIsNotOpen(final Component component) {
