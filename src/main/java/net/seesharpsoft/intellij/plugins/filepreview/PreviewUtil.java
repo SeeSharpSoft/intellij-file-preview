@@ -24,11 +24,11 @@ public final class PreviewUtil {
         return file != null && file.getUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY) != null;
     }
 
-    public static void disposePreview(@NotNull final Project project, final VirtualFile file) {
+    public static void disposePreview(final Project project, final VirtualFile file) {
         disposePreview(project, file, true);
     }
 
-    public static void disposePreview(@NotNull final Project project, final VirtualFile file, final boolean updateRepresentation) {
+    public static void disposePreview(final Project project, final VirtualFile file, final boolean updateRepresentation) {
         if (!isValid(project) || file == null) {
             return;
         }
@@ -47,8 +47,8 @@ public final class PreviewUtil {
         }
     }
 
-    public static void preparePreview(@NotNull final Project project, final VirtualFile file) {
-        if (isValid(project) && (file == null || isPreviewed(file))) {
+    public static void preparePreview(final Project project, final VirtualFile file) {
+        if (!isValid(project) || file == null || isPreviewed(file)) {
             return;
         }
 
@@ -65,6 +65,10 @@ public final class PreviewUtil {
     }
 
     public static VirtualFile getGotoFile(final Project project, final VirtualFile file) {
+        if (!isValid(project) || file == null) {
+            return null;
+        }
+
         PsiElement element = PsiManager.getInstance(project).findFile(file);
         if (element != null) {
             PsiElement navElement = element.getNavigationElement();
@@ -76,7 +80,7 @@ public final class PreviewUtil {
         return file;
     }
 
-    public static void invokeSafeAndWait(Project project, Runnable runnable) {
+    public static void invokeSafeAndWait(final Project project, final Runnable runnable) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
             if (isValid(project)) {
                 runnable.run();
@@ -84,7 +88,7 @@ public final class PreviewUtil {
         });
     }
 
-    public static void invokeSafe(Project project, Runnable runnable) {
+    public static void invokeSafe(final Project project, final Runnable runnable) {
         ApplicationManager.getApplication().invokeLater(() -> {
             if (isValid(project)) {
                 runnable.run();

@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.4.7'
+version '1.4.8'
 
 sourceCompatibility = 1.8
 
@@ -31,6 +31,7 @@ patchPluginXml {
 <pre style="font-family: sans-serif">
 [FIX] Focus of project view more context specific
 [FIX] Switching tab with hotkey leaves focus on explorer with Autoscroll from Source #44
+[HOTFIX] IllegalArgumentException for NotNull parameter 'file'
 </pre>
       """
 }
