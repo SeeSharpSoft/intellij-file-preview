@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.NotNull;
 
 public final class PreviewUtil {
     private PreviewUtil() {
