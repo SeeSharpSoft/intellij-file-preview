@@ -14,11 +14,8 @@ import java.util.Objects;
 public class PreviewSettingsEditor implements SearchableConfigurable {
     public static final String PREVIEW_SETTINGS_EDITOR_ID = "Preview.Settings.Editor";
 
-    private JCheckBox cbClosePreviewOnEmptySelection;
     private JPanel mainPanel;
-    private JCheckBox cbKeyListenerEnabled;
     private JCheckBox cbProjectViewFocusSupport;
-    private JComboBox sbPreviewBehavior;
     private JCheckBox cbOpenEditorOnEditPreview;
     private JCheckBox cbPreviewClosedOnTabChange;
     private JCheckBox cbProjectViewOneClickToggle;
@@ -56,12 +53,9 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     public boolean isModified() {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         Color previewTabColor = previewSettings.getPreviewTabColor();
-        return isModified(cbClosePreviewOnEmptySelection, previewSettings.isPreviewClosedOnEmptySelection()) ||
-                isModified(cbPreviewClosedOnTabChange, previewSettings.isPreviewClosedOnTabChange()) ||
-                isModified(cbKeyListenerEnabled, previewSettings.isQuickNavigationKeyListenerEnabled()) ||
+        return isModified(cbPreviewClosedOnTabChange, previewSettings.isPreviewClosedOnTabChange()) ||
                 isModified(cbProjectViewFocusSupport, previewSettings.isProjectViewFocusSupport()) ||
                 isModified(cbOpenEditorOnEditPreview, previewSettings.isOpenEditorOnEditPreview()) ||
-                !Objects.equals(sbPreviewBehavior.getSelectedIndex(), previewSettings.getPreviewBehavior().ordinal()) ||
                 isModified(cbProjectViewOneClickToggle, previewSettings.isProjectViewToggleOneClick()) ||
                 !Objects.equals(cpPreviewTabColor.isSelected(), previewTabColor != null) ||
                 !Objects.equals(cpPreviewTabColor.getColor(), previewTabColor) ||
@@ -72,12 +66,9 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     public void reset() {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         Color previewTabColor = previewSettings.getPreviewTabColor();
-        cbClosePreviewOnEmptySelection.setSelected(previewSettings.isPreviewClosedOnEmptySelection());
         cbPreviewClosedOnTabChange.setSelected(previewSettings.isPreviewClosedOnTabChange());
-        cbKeyListenerEnabled.setSelected(previewSettings.isQuickNavigationKeyListenerEnabled());
         cbProjectViewFocusSupport.setSelected(previewSettings.isProjectViewFocusSupport());
         cbOpenEditorOnEditPreview.setSelected(previewSettings.isOpenEditorOnEditPreview());
-        sbPreviewBehavior.setSelectedIndex(previewSettings.getPreviewBehavior().ordinal());
         cbProjectViewOneClickToggle.setSelected(previewSettings.isProjectViewToggleOneClick());
         cpPreviewTabColor.setColor(previewTabColor);
         cpPreviewTabColor.setSelected(previewTabColor != null);
@@ -88,12 +79,9 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     public void apply() throws ConfigurationException {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         Color previewTabColor = cpPreviewTabColor.isSelected() ? cpPreviewTabColor.getColor() : null;
-        previewSettings.setPreviewClosedOnEmptySelection(cbClosePreviewOnEmptySelection.isSelected());
         previewSettings.setPreviewClosedOnTabChange(cbPreviewClosedOnTabChange.isSelected());
-        previewSettings.setQuickNavigationKeyListenerEnabled(cbKeyListenerEnabled.isSelected());
         previewSettings.setProjectViewFocusSupport(cbProjectViewFocusSupport.isSelected());
         previewSettings.setOpenEditorOnEditPreview(cbOpenEditorOnEditPreview.isSelected());
-        previewSettings.setPreviewBehavior(PreviewSettings.PreviewBehavior.values()[sbPreviewBehavior.getSelectedIndex()]);
         previewSettings.setProjectViewToggleOneClick(cbProjectViewOneClickToggle.isSelected());
         previewSettings.setPreviewTabColor(previewTabColor);
         previewSettings.setPreviewTabTitlePattern(txtTitlePattern.getText());

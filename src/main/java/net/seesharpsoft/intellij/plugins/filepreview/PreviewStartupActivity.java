@@ -1,43 +1,41 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
-import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.todo.TodoView;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.util.messages.MessageBusConnection;
+import net.seesharpsoft.intellij.plugins.filepreview.viewhandler.ProjectToolWindowHandler;
+import net.seesharpsoft.intellij.plugins.filepreview.viewhandler.VcsToolWindowHandler;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
 
 public class PreviewStartupActivity implements StartupActivity, DumbAware {
 
     protected ConcurrentMap<Project, PreviewProjectHandler> myPreviewHandlerMap = new ConcurrentHashMap<>();
 
-    public static final Map<String, Function<Project, JTree>> SUPPORTED_TOOLWINDOWS_WITH_TREES;
+    public static final Map<String, PreviewViewHandler> SUPPORTED_TOOLWINDOWS_WITH_TREES;
 
     static {
         SUPPORTED_TOOLWINDOWS_WITH_TREES = new HashMap<>();
-        SUPPORTED_TOOLWINDOWS_WITH_TREES.put(
-                ToolWindowId.PROJECT_VIEW,
-                project -> ProjectView.getInstance(project).getCurrentProjectViewPane().getTree()
-        );
-        SUPPORTED_TOOLWINDOWS_WITH_TREES.put(
-                ToolWindowId.TODO_VIEW,
-                project -> null
-        );
+        SUPPORTED_TOOLWINDOWS_WITH_TREES.put(ToolWindowId.PROJECT_VIEW, new ProjectToolWindowHandler());
+        SUPPORTED_TOOLWINDOWS_WITH_TREES.put(ToolWindowId.VCS, new VcsToolWindowHandler());
+//        SUPPORTED_TOOLWINDOWS_WITH_TREES.put(
+//                ToolWindowId.TODO_VIEW,
+//                project -> null
+//        );
         // Arrays.asList(
         //         ,
         //         ToolWindowId.FAVORITES_VIEW,
@@ -47,22 +45,33 @@ public class PreviewStartupActivity implements StartupActivity, DumbAware {
         // );
     }
 
+    protected void initializeOpenFiles(Project project) {
+        FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+        for (VirtualFile virtualFile : fileEditorManager.getOpenFiles()) {
+            PreviewUtil.setStateOpened(project, virtualFile);
+        }
+    }
+
     protected void initialize(Project project, MessageBusConnection connection) {
         ApplicationManager.getApplication().invokeLater(() -> {
             if (isInitialized(project) || project.isDisposed()) {
                 return;
             }
+
             PreviewProjectHandler projectHandler = PreviewProjectHandler.createIfPossible(project, connection);
             if (projectHandler != null) {
                 myPreviewHandlerMap.put(project, projectHandler);
                 registerAllToolWindows(project);
             }
+
+            initializeOpenFiles(project);
         });
     }
 
     protected void dispose(Project project, MessageBusConnection connection) {
         PreviewProjectHandler projectHandler = myPreviewHandlerMap.get(project);
         if (projectHandler != null) {
+            unregisterAllToolWindows(project);
             myPreviewHandlerMap.remove(project);
             projectHandler.dispose();
             connection.disconnect();
@@ -76,6 +85,12 @@ public class PreviewStartupActivity implements StartupActivity, DumbAware {
         }
     }
 
+    protected void unregisterAllToolWindows(Project project) {
+        for (String toolWindowId : SUPPORTED_TOOLWINDOWS_WITH_TREES.keySet()) {
+            unregisterToolWindow(project, toolWindowId);
+        }
+    }
+
     protected boolean isInitialized(Project project) {
         return myPreviewHandlerMap.containsKey(project);
     }
@@ -84,9 +99,8 @@ public class PreviewStartupActivity implements StartupActivity, DumbAware {
         if (!isInitialized(project) || !SUPPORTED_TOOLWINDOWS_WITH_TREES.keySet().contains(toolWindowId)) {
             return;
         }
-
         PreviewProjectHandler previewProjectHandler = myPreviewHandlerMap.get(project);
-        previewProjectHandler.registerTreeHandlers(SUPPORTED_TOOLWINDOWS_WITH_TREES.get(toolWindowId).apply(project));
+        SUPPORTED_TOOLWINDOWS_WITH_TREES.get(toolWindowId).register(previewProjectHandler);
     }
 
     protected void unregisterToolWindow(Project project, String toolWindowId) {
@@ -95,7 +109,7 @@ public class PreviewStartupActivity implements StartupActivity, DumbAware {
         }
 
         PreviewProjectHandler previewProjectHandler = myPreviewHandlerMap.get(project);
-        previewProjectHandler.unregisterTreeHandlers(SUPPORTED_TOOLWINDOWS_WITH_TREES.get(toolWindowId).apply(project));
+        SUPPORTED_TOOLWINDOWS_WITH_TREES.get(toolWindowId).unregister(previewProjectHandler);
     }
 
     @Override
@@ -108,10 +122,10 @@ public class PreviewStartupActivity implements StartupActivity, DumbAware {
         connection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
             @Override
             public void toolWindowRegistered(@NotNull String id) {
-                // ToolWindow toolWindow = ToolWindowManager.getInstance(activityProject).getToolWindow(id);
-                // if (toolWindow != null && !isInitialized(activityProject)) {
-                //     initialize(activityProject, connection);
-                // }
+                 ToolWindow toolWindow = ToolWindowManager.getInstance(activityProject).getToolWindow(id);
+                 if (toolWindow != null && !isInitialized(activityProject)) {
+                     initialize(activityProject, connection);
+                 }
                 registerToolWindow(activityProject, id);
             }
 
