@@ -1,16 +1,29 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+import java.util.function.Consumer;
 
 public final class PreviewUtil {
     private PreviewUtil() {
@@ -93,6 +106,66 @@ public final class PreviewUtil {
                 runnable.run();
             }
         });
+    }
+
+    public static VirtualFile getFileFromDataContext(@NotNull final DataContext dataContext) {
+        return CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+    }
+
+    public static synchronized void openPreviewOrEditor(@NotNull final Project project, final Component component, final boolean requestFocus) {
+        closeAllPreviews(project);
+
+        consumeDataContext(component, dataContext -> {
+            final VirtualFile file = getFileFromDataContext(dataContext);
+            if (file != null && file.isValid() && !file.isDirectory()) {
+                final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+                if (!fileEditorManager.isFileOpen(file)) {
+                    PreviewUtil.preparePreview(project, file);
+                }
+                invokeSafeAndWait(project, () -> fileEditorManager.openFile(file, false));
+            }
+        });
+    }
+
+    public static void openPreviewOrEditor(@NotNull final Project project, final Component component) {
+        openPreviewOrEditor(project, component, false);
+    }
+
+    public static synchronized void closeFileEditor(final Project project, final VirtualFile file) {
+        if (!isValid(project) || file == null) {
+            return;
+        }
+        final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
+        invokeSafeAndWait(project, () -> fileEditorManager.closeFile(file));
+    }
+
+    public static void closeAllPreviews(@NotNull final Project project) {
+        closeOtherPreviews(project, null);
+    }
+
+    public static void closeOtherPreviews(@NotNull final Project project, @Nullable final VirtualFile currentPreview) {
+        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+        for (VirtualFile file : fileEditorManager.getOpenFiles()) {
+            if (isPreviewed(file) && !file.equals(currentPreview)) {
+                closeFileEditor(project, file);
+            }
+        }
+    }
+
+    public static void consumeDataContext(final Component component, final Consumer<DataContext> dataContextConsumer) {
+        DataContext dataContext = DataManager.getInstance().getDataContext(component);
+        getReady(dataContext, dataContextConsumer).doWhenDone(() -> TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+            dataContextConsumer.accept(DataManager.getInstance().getDataContext(component));
+        }));
+    }
+
+    public static void consumeSelectedFile(final Component tree, Consumer<VirtualFile> consumer) {
+        consumeDataContext(tree, context -> consumer.accept(getFileFromDataContext(context)));
+    }
+
+    private static ActionCallback getReady(DataContext context, Object requester) {
+        ToolWindow toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(context);
+        return toolWindow != null ? toolWindow.getReady(requester) : ActionCallback.DONE;
     }
 
     public static boolean isValid(Project project) {
