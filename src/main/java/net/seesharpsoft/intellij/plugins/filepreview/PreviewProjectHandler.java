@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyListener;
@@ -19,6 +20,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import static net.seesharpsoft.intellij.plugins.filepreview.PreviewSettings.PreviewBehavior.EXPLICIT_PREVIEW;
 
@@ -27,13 +30,15 @@ public class PreviewProjectHandler {
     public static final Key<String> PREVIEW_VIRTUAL_FILE_KEY = Key.create(PreviewProjectHandler.class.getName());
 
     private Project myProject;
-    private AbstractProjectViewPane myProjectViewPane;
+
+    private final List<JTree> registeredTrees = new ArrayList<>();
+
     private final KeyListener myTreeKeyListener;
 
     private final PropertyChangeListener mySettingsPropertyChangeListener = evt -> {
         switch (evt.getPropertyName()) {
             case "ProjectViewToggleOneClick":
-                myProjectViewPane.getTree().setToggleClickCount((boolean) evt.getNewValue() ? 1 : 2);
+                registeredTrees.forEach(tree -> tree.setToggleClickCount((boolean) evt.getNewValue() ? 1 : 2));
                 break;
             default:
                 // nothing to do yet
@@ -56,7 +61,7 @@ public class PreviewProjectHandler {
                     break;
                 case 2:
                     if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
-                        PreviewUtil.consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> PreviewUtil.disposePreview(myProject, PreviewUtil.getGotoFile(myProject, selectedFile)));
+                        PreviewUtil.consumeSelectedFile(getCurrentProjectViewPane().getTree(), selectedFile -> PreviewUtil.disposePreview(myProject, PreviewUtil.getGotoFile(myProject, selectedFile)));
                     }
                     break;
                 default:
@@ -79,7 +84,7 @@ public class PreviewProjectHandler {
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
             if (!PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW) && !PreviewUtil.isPreviewed(event.getNewFile())) {
-                PreviewUtil.consumeSelectedFile(myProjectViewPane.getTree(), file -> {
+                PreviewUtil.consumeSelectedFile(getCurrentProjectViewPane().getTree(), file -> {
                     if (PreviewSettings.getInstance().isPreviewClosedOnTabChange() || !PreviewUtil.isPreviewed(file)) {
                         PreviewUtil.closeAllPreviews(myProject);
                     }
@@ -91,7 +96,7 @@ public class PreviewProjectHandler {
     private final FileEditorManagerListener.Before myFileEditorManagerBeforeListener = new FileEditorManagerListener.Before() {
         @Override
         public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            PreviewUtil.consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> {
+            PreviewUtil.consumeSelectedFile(getCurrentProjectViewPane().getTree(), selectedFile -> {
                 if (PreviewUtil.isPreviewed(file) ||
                         (selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW))) {
                     PreviewUtil.closeOtherPreviews(myProject, file);
@@ -122,22 +127,10 @@ public class PreviewProjectHandler {
     protected boolean init(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
         assert myProject == null : "already initialized";
 
-        myProjectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
-        if (myProjectViewPane == null) {
-            return false;
-        }
-
         myProject = project;
 
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         previewSettings.addPropertyChangeListener(mySettingsPropertyChangeListener);
-
-        myProjectViewPane.getTree().addTreeSelectionListener(myTreeSelectionListener);
-        myProjectViewPane.getTree().addKeyListener(myTreeKeyListener);
-        myProjectViewPane.getTree().addMouseListener(myTreeMouseListener);
-
-        // 'false' required to support TAB key in listener - be aware of side effects...
-        myProjectViewPane.getTree().setToggleClickCount(previewSettings.isProjectViewToggleOneClick() ? 1 : 2);
 
         messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myFileEditorManagerListener);
         messageBusConnection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, myFileEditorManagerBeforeListener);
@@ -153,13 +146,38 @@ public class PreviewProjectHandler {
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         previewSettings.removePropertyChangeListener(mySettingsPropertyChangeListener);
 
-        if (myProjectViewPane != null) {
-            myProjectViewPane.getTree().removeTreeSelectionListener(myTreeSelectionListener);
-            myProjectViewPane.getTree().removeKeyListener(myTreeKeyListener);
-            myProjectViewPane.getTree().removeMouseListener(myTreeMouseListener);
-        }
+        unregisterAllTreeHandlers();
 
         myProject = null;
+    }
+
+    public void registerTreeHandlers(@NotNull final JTree tree) {
+        tree.setToggleClickCount(PreviewSettings.getInstance().isProjectViewToggleOneClick() ? 1 : 2);
+        tree.addTreeSelectionListener(myTreeSelectionListener);
+        tree.addKeyListener(myTreeKeyListener);
+        tree.addMouseListener(myTreeMouseListener);
+        registeredTrees.add(tree);
+    }
+
+    public void unregisterAllTreeHandlers() {
+        for (JTree tree : new ArrayList<>(registeredTrees)) {
+            unregisterTreeHandlers(tree);
+        }
+    }
+
+    public void unregisterTreeHandlers(@NotNull final JTree tree) {
+        if (!areTreeHandlersRegistered(tree)) {
+            throw new UnsupportedOperationException("can not unregister unregistered tree");
+        }
+
+        registeredTrees.remove(tree);
+        tree.removeTreeSelectionListener(myTreeSelectionListener);
+        tree.removeKeyListener(myTreeKeyListener);
+        tree.removeMouseListener(myTreeMouseListener);
+    }
+
+    public boolean areTreeHandlersRegistered(@NotNull final JTree tree) {
+        return registeredTrees.contains(tree);
     }
 
     protected boolean shouldProjectViewTreeFocused() {
@@ -169,7 +187,7 @@ public class PreviewProjectHandler {
 
     protected void focusProjectViewTreeIfNeeded() {
         if (shouldProjectViewTreeFocused()) {
-            PreviewUtil.invokeSafe(myProject, () -> myProjectViewPane.getTree().grabFocus());
+            PreviewUtil.invokeSafe(myProject, () -> getCurrentProjectViewPane().getTree().grabFocus());
         }
     }
 
@@ -219,5 +237,17 @@ public class PreviewProjectHandler {
 
     public boolean isValid() {
         return PreviewUtil.isValid(myProject);
+    }
+
+    public Project getProject() {
+        return myProject;
+    }
+
+    public ProjectView getProjectView() {
+        return ProjectView.getInstance(getProject());
+    }
+
+    public AbstractProjectViewPane getCurrentProjectViewPane() {
+        return getProjectView().getCurrentProjectViewPane();
     }
 }
