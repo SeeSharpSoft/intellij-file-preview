@@ -1,15 +1,18 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 public class PreviewKeyListener implements KeyListener {
 
-    private PreviewProjectHandler myPreviewProjectHandler;
+    private final Project myProject;
 
-    public PreviewKeyListener(PreviewProjectHandler previewProjectHandler) {
-        myPreviewProjectHandler = previewProjectHandler;
+    public PreviewKeyListener(@NotNull final Project project) {
+        myProject = project;
     }
 
     @Override
@@ -21,23 +24,10 @@ public class PreviewKeyListener implements KeyListener {
     public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_ESCAPE:
-                if (PreviewSettings.getInstance().isQuickNavigationKeyListenerEnabled()) {
-                    myPreviewProjectHandler.closeCurrentFileEditor();
-                } else {
-                    myPreviewProjectHandler.closeAllPreviews();
-                }
+                PreviewUtil.closeAllPreviews(myProject);
                 break;
             case KeyEvent.VK_SPACE:
-                myPreviewProjectHandler.consumeSelectedFile((Component) e.getSource(), file -> {
-                    myPreviewProjectHandler.openPreviewOrEditor(file);
-                });
-                break;
-            case KeyEvent.VK_TAB:
-                if (PreviewSettings.getInstance().isQuickNavigationKeyListenerEnabled()) {
-                    myPreviewProjectHandler.consumeSelectedFile((Component) e.getSource(), file -> {
-                        myPreviewProjectHandler.focusFileEditor(file, true);
-                    });
-                }
+                PreviewUtil.openPreviewOrEditor(myProject, (Component) e.getSource());
                 break;
             default:
                 // ignore

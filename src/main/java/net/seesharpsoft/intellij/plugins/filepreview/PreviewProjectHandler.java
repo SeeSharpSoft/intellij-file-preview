@@ -1,26 +1,18 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyListener;
@@ -28,7 +20,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeListener;
-import java.util.function.Consumer;
+import java.util.ArrayList;
+import java.util.List;
 
 import static net.seesharpsoft.intellij.plugins.filepreview.PreviewSettings.PreviewBehavior.EXPLICIT_PREVIEW;
 
@@ -37,16 +30,15 @@ public class PreviewProjectHandler {
     public static final Key<String> PREVIEW_VIRTUAL_FILE_KEY = Key.create(PreviewProjectHandler.class.getName());
 
     private Project myProject;
-    private AbstractProjectViewPane myProjectViewPane;
+
+    private final List<JTree> registeredTrees = new ArrayList<>();
+
     private final KeyListener myTreeKeyListener;
 
     private final PropertyChangeListener mySettingsPropertyChangeListener = evt -> {
         switch (evt.getPropertyName()) {
             case "ProjectViewToggleOneClick":
-                myProjectViewPane.getTree().setToggleClickCount((boolean) evt.getNewValue() ? 1 : 2);
-                break;
-            case "QuickNavigationKeyListenerEnabled":
-                myProjectViewPane.getTree().setFocusTraversalKeysEnabled(!(boolean) evt.getNewValue());
+                registeredTrees.forEach(tree -> tree.setToggleClickCount((boolean) evt.getNewValue() ? 1 : 2));
                 break;
             default:
                 // nothing to do yet
@@ -69,7 +61,7 @@ public class PreviewProjectHandler {
                     break;
                 case 2:
                     if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
-                        consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> PreviewUtil.disposePreview(myProject, PreviewUtil.getGotoFile(myProject, selectedFile)));
+                        PreviewUtil.consumeSelectedFile(getCurrentProjectViewPane().getTree(), selectedFile -> PreviewUtil.disposePreview(myProject, PreviewUtil.getGotoFile(myProject, selectedFile)));
                     }
                     break;
                 default:
@@ -92,9 +84,9 @@ public class PreviewProjectHandler {
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
             if (!PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW) && !PreviewUtil.isPreviewed(event.getNewFile())) {
-                consumeSelectedFile(myProjectViewPane.getTree(), file -> {
+                PreviewUtil.consumeSelectedFile(getCurrentProjectViewPane().getTree(), file -> {
                     if (PreviewSettings.getInstance().isPreviewClosedOnTabChange() || !PreviewUtil.isPreviewed(file)) {
-                        closeAllPreviews();
+                        PreviewUtil.closeAllPreviews(myProject);
                     }
                 });
             }
@@ -104,76 +96,73 @@ public class PreviewProjectHandler {
     private final FileEditorManagerListener.Before myFileEditorManagerBeforeListener = new FileEditorManagerListener.Before() {
         @Override
         public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            consumeSelectedFile(myProjectViewPane.getTree(), selectedFile -> {
+            PreviewUtil.consumeSelectedFile(getCurrentProjectViewPane().getTree(), selectedFile -> {
                 if (PreviewUtil.isPreviewed(file) ||
                         (selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW))) {
-                    closeOtherPreviews(file);
+                    PreviewUtil.closeOtherPreviews(myProject, file);
                 }
             });
         }
 
         @Override
         public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            invokeSafe(() -> PreviewUtil.disposePreview(myProject, file));
+            PreviewUtil.invokeSafe(myProject, () -> PreviewUtil.disposePreview(myProject, file));
         }
     };
 
-    public static final PreviewProjectHandler createIfPossible(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
-        assert !project.isDisposed() : "project should not be disposed";
-
-        PreviewProjectHandler previewProjectHandler = new PreviewProjectHandler();
-        if (previewProjectHandler.init(project, messageBusConnection)) {
-            return previewProjectHandler;
-        }
-        return null;
-    }
-
-    protected PreviewProjectHandler() {
-        myTreeKeyListener = new PreviewKeyListener(this);
-    }
-
-    protected boolean init(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
+    protected PreviewProjectHandler(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
         assert myProject == null : "already initialized";
 
-        myProjectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
-        if (myProjectViewPane == null) {
-            return false;
-        }
-
         myProject = project;
+        myTreeKeyListener = new PreviewKeyListener(project);
 
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         previewSettings.addPropertyChangeListener(mySettingsPropertyChangeListener);
 
-        myProjectViewPane.getTree().addTreeSelectionListener(myTreeSelectionListener);
-        myProjectViewPane.getTree().addKeyListener(myTreeKeyListener);
-        myProjectViewPane.getTree().addMouseListener(myTreeMouseListener);
-
-        // 'false' required to support TAB key in listener - be aware of side effects...
-        myProjectViewPane.getTree().setFocusTraversalKeysEnabled(!previewSettings.isQuickNavigationKeyListenerEnabled());
-        myProjectViewPane.getTree().setToggleClickCount(previewSettings.isProjectViewToggleOneClick() ? 1 : 2);
-
         messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myFileEditorManagerListener);
         messageBusConnection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, myFileEditorManagerBeforeListener);
-
-        return true;
     }
 
     public void dispose() {
         assert myProject != null : "not initialized yet";
 
-        closeAllPreviews();
+        PreviewUtil.closeAllPreviews(myProject);
 
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         previewSettings.removePropertyChangeListener(mySettingsPropertyChangeListener);
 
-        if (myProjectViewPane != null) {
-            myProjectViewPane.getTree().removeTreeSelectionListener(myTreeSelectionListener);
-            myProjectViewPane.getTree().removeKeyListener(myTreeKeyListener);
-            myProjectViewPane.getTree().removeMouseListener(myTreeMouseListener);
-        }
+        unregisterAllTreeHandlers();
 
         myProject = null;
+    }
+
+    public void registerTreeHandlers(@NotNull final JTree tree) {
+        tree.setToggleClickCount(PreviewSettings.getInstance().isProjectViewToggleOneClick() ? 1 : 2);
+        tree.addTreeSelectionListener(myTreeSelectionListener);
+        tree.addKeyListener(myTreeKeyListener);
+        tree.addMouseListener(myTreeMouseListener);
+        registeredTrees.add(tree);
+    }
+
+    public void unregisterAllTreeHandlers() {
+        for (JTree tree : new ArrayList<>(registeredTrees)) {
+            unregisterTreeHandlers(tree);
+        }
+    }
+
+    public void unregisterTreeHandlers(@NotNull final JTree tree) {
+        if (!areTreeHandlersRegistered(tree)) {
+            throw new UnsupportedOperationException("can not unregister unregistered tree");
+        }
+
+        registeredTrees.remove(tree);
+        tree.removeTreeSelectionListener(myTreeSelectionListener);
+        tree.removeKeyListener(myTreeKeyListener);
+        tree.removeMouseListener(myTreeMouseListener);
+    }
+
+    public boolean areTreeHandlersRegistered(@NotNull final JTree tree) {
+        return registeredTrees.contains(tree);
     }
 
     protected boolean shouldProjectViewTreeFocused() {
@@ -183,12 +172,12 @@ public class PreviewProjectHandler {
 
     protected void focusProjectViewTreeIfNeeded() {
         if (shouldProjectViewTreeFocused()) {
-            invokeSafe(() -> myProjectViewPane.getTree().grabFocus());
+            PreviewUtil.invokeSafe(myProject, () -> getCurrentProjectViewPane().getTree().grabFocus());
         }
     }
 
     protected void focusComponentIfSelectedFileIsNotOpen(final Component component) {
-        consumeSelectedFile(component, selectedFile -> {
+        PreviewUtil.consumeSelectedFile(component, selectedFile -> {
             if (selectedFile == null) {
                 return;
             }
@@ -204,15 +193,13 @@ public class PreviewProjectHandler {
         // - "Open declaration source in the same tab" is focus based (#29) - ensure that component has focus
         // - "Autoscroll from Source" triggers this function as well when switching tabs (#44) - focus shouldn't change
         focusComponentIfSelectedFileIsNotOpen(component);
-        invokeSafe(() -> {
+        PreviewUtil.invokeSafe(myProject, () -> {
             switch (PreviewSettings.getInstance().getPreviewBehavior()) {
                 case PREVIEW_BY_DEFAULT:
-                    consumeSelectedFile(component, file -> {
-                        openPreviewOrEditor(PreviewUtil.getGotoFile(myProject, file));
-                    });
+                    PreviewUtil.openPreviewOrEditor(myProject, component);
                     break;
                 case EXPLICIT_PREVIEW:
-                    consumeSelectedFile(component, file -> {
+                    PreviewUtil.consumeSelectedFile(component, file -> {
                         focusFileEditor(PreviewUtil.getGotoFile(myProject, file), false);
                     });
                     break;
@@ -220,64 +207,6 @@ public class PreviewProjectHandler {
                     throw new UnsupportedOperationException(String.format("case '%s' not handled", PreviewSettings.getInstance().getPreviewBehavior()));
             }
         });
-    }
-
-    public void openPreviewOrEditor(final VirtualFile file) {
-        if (!isValid() || file == null || file.isDirectory() || !file.isValid()) {
-            if (PreviewSettings.getInstance().isPreviewClosedOnEmptySelection()) {
-                closeAllPreviews();
-            }
-            return;
-        }
-        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-        if (!fileEditorManager.isFileOpen(file)) {
-            PreviewUtil.preparePreview(myProject, file);
-        }
-        invokeSafeAndWait(() -> fileEditorManager.openFile(file, false));
-    }
-
-    public void consumeSelectedFile(final Component tree, Consumer<VirtualFile> consumer) {
-        DataContext dataContext = DataManager.getInstance().getDataContext(tree);
-        getReady(dataContext).doWhenDone(() -> TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
-            DataContext context = DataManager.getInstance().getDataContext(tree);
-            final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
-            consumer.accept(file);
-        }));
-    }
-
-    private ActionCallback getReady(DataContext context) {
-        ToolWindow toolWindow = PlatformDataKeys.TOOL_WINDOW.getData(context);
-        return toolWindow != null ? toolWindow.getReady(this) : ActionCallback.DONE;
-    }
-
-    public void closeCurrentFileEditor() {
-        if (!isValid()) {
-            return;
-        }
-
-        final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
-        closeFileEditor(fileEditorManager.getCurrentFile());
-    }
-
-    public void closeFileEditor(VirtualFile file) {
-        if (!isValid() || file == null) {
-            return;
-        }
-        final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
-        invokeSafeAndWait(() -> fileEditorManager.closeFile(file));
-    }
-
-    public void closeAllPreviews() {
-        closeOtherPreviews(null);
-    }
-
-    public void closeOtherPreviews(@Nullable final VirtualFile currentPreview) {
-        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-        for (VirtualFile file : fileEditorManager.getOpenFiles()) {
-            if (PreviewUtil.isPreviewed(file) && !file.equals(currentPreview)) {
-                closeFileEditor(file);
-            }
-        }
     }
 
     public void focusFileEditor(VirtualFile file, boolean focusEditor) {
@@ -288,18 +217,22 @@ public class PreviewProjectHandler {
         if (!fileEditorManager.isFileOpen(file)) {
             return;
         }
-        invokeSafe(() -> fileEditorManager.openFile(file, focusEditor));
-    }
-
-    public void invokeSafeAndWait(Runnable runnable) {
-        PreviewUtil.invokeSafeAndWait(myProject, runnable);
-    }
-
-    public void invokeSafe(Runnable runnable) {
-        PreviewUtil.invokeSafe(myProject, runnable);
+        PreviewUtil.invokeSafe(myProject, () -> fileEditorManager.openFile(file, focusEditor));
     }
 
     public boolean isValid() {
         return PreviewUtil.isValid(myProject);
+    }
+
+    public Project getProject() {
+        return myProject;
+    }
+
+    public ProjectView getProjectView() {
+        return ProjectView.getInstance(getProject());
+    }
+
+    public AbstractProjectViewPane getCurrentProjectViewPane() {
+        return getProjectView().getCurrentProjectViewPane();
     }
 }
