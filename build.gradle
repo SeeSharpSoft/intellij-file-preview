@@ -29,7 +29,7 @@ intellij {
 patchPluginXml {
     changeNotes """
 <pre style="font-family: sans-serif">
-[NEW] 
+[NEW] Improved preview handling of de-compiled files
 [FIX] Files not opening when a Scope or other view is selected in the project tool window #47
 </pre>
       """
