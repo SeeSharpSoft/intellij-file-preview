@@ -112,18 +112,23 @@ public final class PreviewUtil {
         return CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     }
 
-    public static synchronized void openPreviewOrEditor(@NotNull final Project project, final Component component, final boolean requestFocus) {
-        closeAllPreviews(project);
-
-        consumeDataContext(component, dataContext -> {
-            final VirtualFile file = getFileFromDataContext(dataContext);
-            if (file != null && file.isValid() && !file.isDirectory()) {
-                final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-                if (!fileEditorManager.isFileOpen(file)) {
-                    PreviewUtil.preparePreview(project, file);
-                }
-                invokeSafeAndWait(project, () -> fileEditorManager.openFile(file, false));
+    private static void openPreviewOrEditor(@NotNull final Project project, final VirtualFile file, final boolean requestFocus) {
+        if (!isValid(project) || file == null || file.isDirectory() || !file.isValid()) {
+            if (PreviewSettings.getInstance().isPreviewClosedOnEmptySelection()) {
+                closeOtherPreviews(project, file);
             }
+            return;
+        }
+        final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+        if (!fileEditorManager.isFileOpen(file)) {
+            PreviewUtil.preparePreview(project, file);
+        }
+        invokeSafeAndWait(project, () -> fileEditorManager.openFile(file, requestFocus));
+    }
+
+    public static synchronized void openPreviewOrEditor(@NotNull final Project project, final Component component, final boolean requestFocus) {
+        consumeDataContext(component, dataContext -> {
+            openPreviewOrEditor(project, getFileFromDataContext(dataContext), requestFocus);
         });
     }
 
