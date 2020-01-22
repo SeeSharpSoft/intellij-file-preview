@@ -11,8 +11,11 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.util.messages.MessageBusConnection;
+import net.seesharpsoft.intellij.plugins.filepreview.viewhandler.ProjectToolWindowHandler;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -20,21 +23,30 @@ public class PreviewStartupActivity implements StartupActivity, DumbAware {
 
     protected ConcurrentMap<Project, PreviewProjectHandler> myPreviewHandlerMap = new ConcurrentHashMap<>();
 
-    protected void register(Project project, MessageBusConnection connection) {
+    public static final Map<String, PreviewViewHandler> SUPPORTED_TOOLWINDOWS_WITH_TREES;
+
+    static {
+        SUPPORTED_TOOLWINDOWS_WITH_TREES = new HashMap<>();
+        SUPPORTED_TOOLWINDOWS_WITH_TREES.put(ToolWindowId.PROJECT_VIEW, new ProjectToolWindowHandler());
+//        SUPPORTED_TOOLWINDOWS_WITH_TREES.put(ToolWindowId.VCS, new VcsToolWindowHandler());
+    }
+
+    protected void initialize(Project project, MessageBusConnection connection) {
         ApplicationManager.getApplication().invokeLater(() -> {
-            if (isRegistered(project) || project.isDisposed()) {
+            if (isInitialized(project) || project.isDisposed()) {
                 return;
             }
-            PreviewProjectHandler projectHandler = PreviewProjectHandler.createIfPossible(project, connection);
-            if (projectHandler != null) {
-                myPreviewHandlerMap.put(project, projectHandler);
-            }
+
+            PreviewProjectHandler projectHandler = new PreviewProjectHandler(project, connection);
+            myPreviewHandlerMap.put(project, projectHandler);
+            registerAllToolWindows(project);
         });
     }
 
-    protected void unregister(Project project, MessageBusConnection connection) {
+    protected void dispose(Project project, MessageBusConnection connection) {
         PreviewProjectHandler projectHandler = myPreviewHandlerMap.get(project);
         if (projectHandler != null) {
+            unregisterAllToolWindows(project);
             myPreviewHandlerMap.remove(project);
             projectHandler.dispose();
             connection.disconnect();
@@ -42,30 +54,68 @@ public class PreviewStartupActivity implements StartupActivity, DumbAware {
         }
     }
 
-    protected boolean isRegistered(Project project) {
+    protected void registerAllToolWindows(Project project) {
+        for (String toolWindowId : SUPPORTED_TOOLWINDOWS_WITH_TREES.keySet()) {
+            registerToolWindow(project, toolWindowId);
+        }
+    }
+
+    protected void unregisterAllToolWindows(Project project) {
+        for (String toolWindowId : SUPPORTED_TOOLWINDOWS_WITH_TREES.keySet()) {
+            unregisterToolWindow(project, toolWindowId);
+        }
+    }
+
+    protected boolean isInitialized(Project project) {
         return myPreviewHandlerMap.containsKey(project);
+    }
+
+    protected void registerToolWindow(Project project, String toolWindowId) {
+        if (!isInitialized(project) || !SUPPORTED_TOOLWINDOWS_WITH_TREES.keySet().contains(toolWindowId)) {
+            return;
+        }
+        PreviewProjectHandler previewProjectHandler = myPreviewHandlerMap.get(project);
+        SUPPORTED_TOOLWINDOWS_WITH_TREES.get(toolWindowId).register(previewProjectHandler);
+    }
+
+    protected void unregisterToolWindow(Project project, String toolWindowId) {
+        if (!isInitialized(project) || !SUPPORTED_TOOLWINDOWS_WITH_TREES.keySet().contains(toolWindowId)) {
+            return;
+        }
+        PreviewProjectHandler previewProjectHandler = myPreviewHandlerMap.get(project);
+        SUPPORTED_TOOLWINDOWS_WITH_TREES.get(toolWindowId).unregister(previewProjectHandler);
     }
 
     @Override
     public void runActivity(@NotNull Project activityProject) {
-        if (isRegistered(activityProject)) {
+        if (isInitialized(activityProject)) {
             return;
         }
 
         MessageBusConnection connection = activityProject.getMessageBus().connect();
         connection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
             @Override
+            public void toolWindowRegistered(@NotNull String id) {
+                ToolWindow toolWindow = ToolWindowManager.getInstance(activityProject).getToolWindow(id);
+                if (toolWindow != null && !isInitialized(activityProject)) {
+                    initialize(activityProject, connection);
+                }
+                registerToolWindow(activityProject, id);
+            }
+
+            @Override
             public void toolWindowUnregistered(@NotNull String id, @NotNull ToolWindow toolWindow) {
                 if (ToolWindowId.PROJECT_VIEW.equals(id)) {
-                    unregister(activityProject, connection);
+                    dispose(activityProject, connection);
                 }
+                unregisterToolWindow(activityProject, id);
             }
 
             @Override
             public void stateChanged() {
                 ToolWindow window = ToolWindowManager.getInstance(activityProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
-                if (window != null && !isRegistered(activityProject)) {
-                    register(activityProject, connection);
+                if (window != null && !isInitialized(activityProject)) {
+                    initialize(activityProject, connection);
                 }
             }
         });
@@ -73,11 +123,12 @@ public class PreviewStartupActivity implements StartupActivity, DumbAware {
             @Override
             public void projectClosingBeforeSave(@NotNull Project project) {
                 if (activityProject.equals(project)) {
-                    unregister(activityProject, connection);
+                    dispose(activityProject, connection);
                 }
             }
         });
+
         // try to register at startup
-        register(activityProject, connection);
+        initialize(activityProject, connection);
     }
 }
