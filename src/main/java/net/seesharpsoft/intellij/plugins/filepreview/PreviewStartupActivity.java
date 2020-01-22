@@ -37,11 +37,9 @@ public class PreviewStartupActivity implements StartupActivity, DumbAware {
                 return;
             }
 
-            PreviewProjectHandler projectHandler = PreviewProjectHandler.createIfPossible(project, connection);
-            if (projectHandler != null) {
-                myPreviewHandlerMap.put(project, projectHandler);
-                registerAllToolWindows(project);
-            }
+            PreviewProjectHandler projectHandler = new PreviewProjectHandler(project, connection);
+            myPreviewHandlerMap.put(project, projectHandler);
+            registerAllToolWindows(project);
         });
     }
 

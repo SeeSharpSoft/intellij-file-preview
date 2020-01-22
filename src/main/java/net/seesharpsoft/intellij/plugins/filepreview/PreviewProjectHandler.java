@@ -110,32 +110,17 @@ public class PreviewProjectHandler {
         }
     };
 
-    public static final PreviewProjectHandler createIfPossible(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
-        assert !project.isDisposed() : "project should not be disposed";
-
-        PreviewProjectHandler previewProjectHandler = new PreviewProjectHandler();
-        if (previewProjectHandler.init(project, messageBusConnection)) {
-            return previewProjectHandler;
-        }
-        return null;
-    }
-
-    protected PreviewProjectHandler() {
-        myTreeKeyListener = new PreviewKeyListener(myProject);
-    }
-
-    protected boolean init(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
+    protected PreviewProjectHandler(@NotNull Project project, @NotNull MessageBusConnection messageBusConnection) {
         assert myProject == null : "already initialized";
 
         myProject = project;
+        myTreeKeyListener = new PreviewKeyListener(project);
 
         PreviewSettings previewSettings = PreviewSettings.getInstance();
         previewSettings.addPropertyChangeListener(mySettingsPropertyChangeListener);
 
         messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myFileEditorManagerListener);
         messageBusConnection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, myFileEditorManagerBeforeListener);
-
-        return true;
     }
 
     public void dispose() {

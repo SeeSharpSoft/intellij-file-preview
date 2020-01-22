@@ -1,6 +1,7 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -10,7 +11,7 @@ public class PreviewKeyListener implements KeyListener {
 
     private final Project myProject;
 
-    public PreviewKeyListener(final Project project) {
+    public PreviewKeyListener(@NotNull final Project project) {
         myProject = project;
     }
 
@@ -27,11 +28,6 @@ public class PreviewKeyListener implements KeyListener {
                 break;
             case KeyEvent.VK_SPACE:
                 PreviewUtil.openPreviewOrEditor(myProject, (Component) e.getSource());
-                break;
-            case KeyEvent.VK_TAB:
-//                PreviewUtil.consumeSelectedFile((Component) e.getSource(), file -> {
-//                    PreviewUtil.focusFileEditor(file, true);
-//                });
                 break;
             default:
                 // ignore
