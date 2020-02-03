@@ -61,7 +61,7 @@ public class PreviewProjectHandler {
                     break;
                 case 2:
                     if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
-                        PreviewUtil.consumeSelectedFile(getCurrentProjectViewPane().getTree(), selectedFile -> PreviewUtil.disposePreview(myProject, PreviewUtil.getGotoFile(myProject, selectedFile)));
+                        PreviewUtil.consumeSelectedFile(mouseEvent.getComponent(), selectedFile -> PreviewUtil.disposePreview(myProject, PreviewUtil.getGotoFile(myProject, selectedFile)));
                     }
                     break;
                 default:
@@ -83,8 +83,9 @@ public class PreviewProjectHandler {
 
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-            if (!PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW) && !PreviewUtil.isPreviewed(event.getNewFile())) {
-                PreviewUtil.consumeSelectedFile(getCurrentProjectViewPane().getTree(), file -> {
+            AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
+            if (currentProjectViewPane != null && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW) && !PreviewUtil.isPreviewed(event.getNewFile())) {
+                PreviewUtil.consumeSelectedFile(currentProjectViewPane.getTree(), file -> {
                     if (PreviewSettings.getInstance().isPreviewClosedOnTabChange() || !PreviewUtil.isPreviewed(file)) {
                         PreviewUtil.closeAllPreviews(myProject);
                     }
@@ -96,7 +97,11 @@ public class PreviewProjectHandler {
     private final FileEditorManagerListener.Before myFileEditorManagerBeforeListener = new FileEditorManagerListener.Before() {
         @Override
         public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            PreviewUtil.consumeSelectedFile(getCurrentProjectViewPane().getTree(), selectedFile -> {
+            AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
+            if (currentProjectViewPane == null) {
+                return;
+            }
+            PreviewUtil.consumeSelectedFile(currentProjectViewPane.getTree(), selectedFile -> {
                 if (PreviewUtil.isPreviewed(file) ||
                         (selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW))) {
                     PreviewUtil.closeOtherPreviews(myProject, file);
@@ -171,8 +176,12 @@ public class PreviewProjectHandler {
     }
 
     protected void focusProjectViewTreeIfNeeded() {
+        AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
+        if (currentProjectViewPane == null) {
+            return;
+        }
         if (shouldProjectViewTreeFocused()) {
-            PreviewUtil.invokeSafe(myProject, () -> getCurrentProjectViewPane().getTree().grabFocus());
+            PreviewUtil.invokeSafe(myProject, () -> currentProjectViewPane.getTree().grabFocus());
         }
     }
 
