@@ -39,16 +39,6 @@ Whenever the focused file in the Project View changes, a preview is shown or the
 
 Whenever the focused file in the Project View changes, the already existing editor is focused. The Preview Editor tab is only shown when pressing \<SPACE>. The preview stays open on further navigation and must also be closed manually.
 
-#### Enable quick navigation key events (*disabled*)
-
-Additional key commands will be activated (when Project View is focused):
-
-\<ESC>: close the currently focused editor
-
-\<TAB>: move input focus to the currently selected file editor
-
-**Note:** The preview tab will always be closed on \<ESC>, even if the this option is disabled.
-
 #### Focus Project View after opening/closing file editor (*enabled*)
 
 Grab/keep focus on Project View (instead of focusing editor) when opening or closing a file.
@@ -56,6 +46,10 @@ Grab/keep focus on Project View (instead of focusing editor) when opening or clo
 #### Toggle tree expand/collapse by single click (*enabled*)
 
 Defines the required number of clicks to expand/collapse a node in Project View tree: one click if option is *enabled* (plugin default), two clicks if option is *disabled* (IDE default).
+
+#### Keep expand/collapse state (*enabled*)
+
+If enabled, the expand/collapse states of the folders are kept when a parent folder gets collapsed/expanded.
 
 ### Preview Editor Tab
 
