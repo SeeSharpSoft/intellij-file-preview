@@ -52,7 +52,7 @@ public class PreviewProjectHandler {
 
     private final MouseListener myTreeMouseListener = new MouseAdapter() {
         @Override
-        public void mouseClicked(MouseEvent mouseEvent) {
+        public void mouseReleased(MouseEvent mouseEvent) {
             super.mouseClicked(mouseEvent);
 
             switch (mouseEvent.getClickCount()) {
@@ -142,6 +142,9 @@ public class PreviewProjectHandler {
     }
 
     public void registerTreeHandlers(@NotNull final JTree tree) {
+        if (areTreeHandlersRegistered(tree)) {
+            return;
+        }
         tree.setToggleClickCount(PreviewSettings.getInstance().isProjectViewToggleOneClick() ? 1 : 2);
         tree.addTreeSelectionListener(myTreeSelectionListener);
         tree.addKeyListener(myTreeKeyListener);
@@ -199,6 +202,9 @@ public class PreviewProjectHandler {
     }
 
     public void openOrFocusSelectedFile(final Component component) {
+        if (isAutoScrollToSource()) {
+            return;
+        }
         // - "Open declaration source in the same tab" is focus based (#29) - ensure that component has focus
         // - "Autoscroll from Source" triggers this function as well when switching tabs (#44) - focus shouldn't change
         focusComponentIfSelectedFileIsNotOpen(component);
@@ -243,5 +249,9 @@ public class PreviewProjectHandler {
 
     public AbstractProjectViewPane getCurrentProjectViewPane() {
         return getProjectView().getCurrentProjectViewPane();
+    }
+
+    public boolean isAutoScrollToSource() {
+        return getProjectView().isAutoscrollToSource(getCurrentProjectViewPane().getId());
     }
 }

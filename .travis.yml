@@ -4,6 +4,7 @@ jdk:
 
 env:
   - IDEA_VERSION=CL-2018.3.4
+  - IDEA_VERSION=IC-2019.3.3
   - IDEA_VERSION=PC-LATEST-EAP-SNAPSHOT
 
 script: xvfb-run gradle check
