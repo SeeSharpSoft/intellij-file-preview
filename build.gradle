@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.5.1'
+version '1.5.2'
 
 sourceCompatibility = 1.8
 
@@ -29,9 +29,8 @@ intellij {
 patchPluginXml {
     changeNotes """
 <pre style="font-family: sans-serif">
-[NEW] Improved preview handling of de-compiled files
-[FIX] Files not opening when a Scope or other view is selected in the project tool window #47
-[FIX] NullPointerException on selectionChanged #55
+[FIX] Project panel auto-hides after file selecting #50
+[NEW] keep collapse/expand state of folders in project view
 </pre>
       """
 }

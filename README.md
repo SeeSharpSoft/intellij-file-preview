@@ -17,11 +17,9 @@ This plugin enables a quick file preview on simple selecting files in Project Vi
 - focus editor of selected file if already opened
 - settings page to individualize preview behavior
 - customize the editor tab representation (title & color)
+- **since 1.5.2** keep collapse/expand state in project view if parent node is collapsed (customizable, enabled by default)
 
-**Please note:** If **[Autoscroll to source](https://www.jetbrains.com/help/idea/navigating-through-the-source-code.html#scroll_to_from_source)** is enabled, the actual editor is opened instead of a preview.
-This is the intended and unchanged behavior. To make proper use of the Preview Tab, **this option must be disabled!**
-
-This plugin is fresh like a mild breeze in summer - please contribute issues, ideas and feedback. Thanks!
+**Please note:** If **[Autoscroll to source/Open files with single click](https://www.jetbrains.com/help/idea/navigating-through-the-source-code.html#scroll_to_from_source)** is enabled, the actual editor tab is opened instead of a preview. To make proper use of the preview tab, **this option must be disabled!**
 
 (inspired by https://youtrack.jetbrains.com/issue/IDEA-130918)
 

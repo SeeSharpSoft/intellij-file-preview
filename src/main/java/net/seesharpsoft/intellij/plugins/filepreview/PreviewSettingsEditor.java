@@ -23,6 +23,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     private JCheckBox cbProjectViewOneClickToggle;
     private CheckBoxWithColorChooser cpPreviewTabColor;
     private JTextField txtTitlePattern;
+    private JCheckBox cbKeepExpandCollapseState;
 
     protected void createUIComponents() {
         cpPreviewTabColor = new CheckBoxWithColorChooser("Tab color   ");
@@ -63,7 +64,8 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
                 isModified(cbProjectViewOneClickToggle, previewSettings.isProjectViewToggleOneClick()) ||
                 !Objects.equals(cpPreviewTabColor.isSelected(), previewTabColor != null) ||
                 !Objects.equals(cpPreviewTabColor.getColor(), previewTabColor) ||
-                !Objects.equals(txtTitlePattern.getText(), previewSettings.getPreviewTabTitlePattern());
+                !Objects.equals(txtTitlePattern.getText(), previewSettings.getPreviewTabTitlePattern()) ||
+                isModified(cbKeepExpandCollapseState, previewSettings.isKeepExpandCollapseState());
     }
 
     @Override
@@ -79,6 +81,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         cpPreviewTabColor.setColor(previewTabColor);
         cpPreviewTabColor.setSelected(previewTabColor != null);
         txtTitlePattern.setText(previewSettings.getPreviewTabTitlePattern());
+        cbKeepExpandCollapseState.setSelected(previewSettings.isKeepExpandCollapseState());
     }
 
     @Override
@@ -93,6 +96,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         previewSettings.setProjectViewToggleOneClick(cbProjectViewOneClickToggle.isSelected());
         previewSettings.setPreviewTabColor(previewTabColor);
         previewSettings.setPreviewTabTitlePattern(txtTitlePattern.getText());
+        previewSettings.setKeepExpandCollapseState(cbKeepExpandCollapseState.isSelected());
     }
 
 }
