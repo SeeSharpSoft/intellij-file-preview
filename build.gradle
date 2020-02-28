@@ -24,7 +24,7 @@ intellij {
     version System.getenv().getOrDefault('IDEA_VERSION', 'IC-192.5728.98')
     updateSinceUntilBuild false
     instrumentCode true
-    downloadSources true
+    downloadSources false
 }
 patchPluginXml {
     changeNotes """
