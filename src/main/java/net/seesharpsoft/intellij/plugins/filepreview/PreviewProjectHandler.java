@@ -122,6 +122,8 @@ public class PreviewProjectHandler {
         myTreeKeyListener = new PreviewKeyListener(project);
 
         PreviewSettings previewSettings = PreviewSettings.getInstance();
+        // re-set registry entry
+        previewSettings.setKeepExpandCollapseState(previewSettings.isKeepExpandCollapseState());
         previewSettings.addPropertyChangeListener(mySettingsPropertyChangeListener);
 
         messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myFileEditorManagerListener);

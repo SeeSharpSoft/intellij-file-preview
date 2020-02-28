@@ -5,6 +5,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -34,6 +35,7 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
         public boolean PROJECT_VIEW_TOGGLE_ONE_CLICK = true;
         public String PREVIEW_TAB_TITLE_PATTERN = "<<%s>>";
         public String PREVIEW_TAB_COLOR;
+        public boolean KEEP_EXPAND_COLLAPSE_STATE = true;
     }
 
     private OptionSet myOptions = new OptionSet();
@@ -135,5 +137,15 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
 
     public void setPreviewTabTitlePattern(String titlePattern) {
         getState().PREVIEW_TAB_TITLE_PATTERN = titlePattern;
+    }
+
+    public boolean isKeepExpandCollapseState() {
+        return getState().KEEP_EXPAND_COLLAPSE_STATE;
+    }
+
+    public void setKeepExpandCollapseState(boolean keepExpandCollapseState) {
+        getState().KEEP_EXPAND_COLLAPSE_STATE = keepExpandCollapseState;
+        Registry.get("async.project.view.collapse.tree.path.recursively").setValue(!keepExpandCollapseState);
+        Registry.get("ide.tree.collapse.recursively").setValue(!keepExpandCollapseState);
     }
 }
