@@ -52,8 +52,6 @@ public class PreviewProjectHandler {
     private final MouseListener myTreeMouseListener = new MouseAdapter() {
         @Override
         public void mouseReleased(MouseEvent mouseEvent) {
-            super.mouseClicked(mouseEvent);
-
             switch (mouseEvent.getClickCount()) {
                 case 1:
                     // one-click behavior is handled by myTreeSelectionListener
