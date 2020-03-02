@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -84,14 +85,6 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
         getState().CLOSE_PREVIEW_ON_TAB_CHANGE = previewClosedOnTabChange;
     }
 
-    public boolean isProjectViewFocusSupport() {
-        return getState().PROJECT_VIEW_FOCUS_SUPPORT;
-    }
-
-    public void setProjectViewFocusSupport(boolean projectViewFocusSupport) {
-        getState().PROJECT_VIEW_FOCUS_SUPPORT = projectViewFocusSupport;
-    }
-
     public boolean isOpenEditorOnEditPreview() {
         return getState().OPEN_EDITOR_ON_EDIT_PREVIEW;
     }
@@ -143,9 +136,22 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
         return getState().KEEP_EXPAND_COLLAPSE_STATE;
     }
 
+    private void tryGetAndSetRegistryValue(String registryKey, boolean value) {
+        RegistryValue registryValue;
+        try {
+            registryValue = Registry.get(registryKey);
+        } catch (Exception exc) {
+            // silently ignore any exception
+            return;
+        }
+        if (registryValue != null) {
+            registryValue.setValue(value);
+        }
+    }
+
     public void setKeepExpandCollapseState(boolean keepExpandCollapseState) {
         getState().KEEP_EXPAND_COLLAPSE_STATE = keepExpandCollapseState;
-        Registry.get("async.project.view.collapse.tree.path.recursively").setValue(!keepExpandCollapseState);
-        Registry.get("ide.tree.collapse.recursively").setValue(!keepExpandCollapseState);
+        tryGetAndSetRegistryValue("async.project.view.collapse.tree.path.recursively", !keepExpandCollapseState);
+        tryGetAndSetRegistryValue("ide.tree.collapse.recursively", !keepExpandCollapseState);
     }
 }
