@@ -1,6 +1,5 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -73,17 +72,17 @@ public class PreviewProjectHandler {
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
         @Override
         public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            focusProjectViewTreeIfNeeded();
+
         }
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            focusProjectViewTreeIfNeeded();
+            PreviewUtil.focusProjectViewTreeIfNeeded(myProject, file);
         }
 
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-            AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
+            AbstractProjectViewPane currentProjectViewPane = PreviewUtil.getCurrentProjectViewPane(myProject);
             if (currentProjectViewPane != null && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW) && !PreviewUtil.isPreviewed(event.getNewFile())) {
                 PreviewUtil.consumeSelectedFile(currentProjectViewPane.getTree(), file -> {
                     if (PreviewSettings.getInstance().isPreviewClosedOnTabChange() || !PreviewUtil.isPreviewed(file)) {
@@ -97,7 +96,7 @@ public class PreviewProjectHandler {
     private final FileEditorManagerListener.Before myFileEditorManagerBeforeListener = new FileEditorManagerListener.Before() {
         @Override
         public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
+            AbstractProjectViewPane currentProjectViewPane = PreviewUtil.getCurrentProjectViewPane(myProject);
             if (currentProjectViewPane == null) {
                 return;
             }
@@ -111,7 +110,12 @@ public class PreviewProjectHandler {
 
         @Override
         public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            PreviewUtil.invokeSafe(myProject, () -> PreviewUtil.disposePreview(myProject, file));
+            if (PreviewUtil.isPreviewed(file)) {
+                if (PreviewUtil.isEditorSelected(myProject, file) && PreviewUtil.isProjectTreeFocused(myProject)) {
+                    file.putUserData(PreviewUtil.OPENED_BY_PREVIEW, true);
+                }
+                PreviewUtil.invokeSafe(myProject, () -> PreviewUtil.disposePreview(myProject, file));
+            }
         }
     };
 
@@ -175,21 +179,6 @@ public class PreviewProjectHandler {
         return registeredTrees.contains(tree);
     }
 
-    protected boolean shouldProjectViewTreeFocused() {
-        ProjectView projectView = ProjectView.getInstance(myProject);
-        return PreviewSettings.getInstance().isProjectViewFocusSupport() && !projectView.isAutoscrollFromSource(projectView.getCurrentViewId());
-    }
-
-    protected void focusProjectViewTreeIfNeeded() {
-        AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
-        if (currentProjectViewPane == null) {
-            return;
-        }
-        if (shouldProjectViewTreeFocused()) {
-            PreviewUtil.invokeSafe(myProject, () -> currentProjectViewPane.getTree().grabFocus());
-        }
-    }
-
     protected void focusComponentIfSelectedFileIsNotOpen(final Component component) {
         PreviewUtil.consumeSelectedFile(component, selectedFile -> {
             if (selectedFile == null) {
@@ -197,14 +186,15 @@ public class PreviewProjectHandler {
             }
             final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
             final VirtualFile gotoFile = PreviewUtil.getGotoFile(myProject, selectedFile);
-            if (gotoFile != null && !fileEditorManager.isFileOpen(gotoFile)) {
+            if (PreviewUtil.isProjectTreeFocused(myProject) ||
+                    (gotoFile != null && !fileEditorManager.isFileOpen(gotoFile))) {
                 component.requestFocus();
             }
         });
     }
 
     public void openOrFocusSelectedFile(final Component component) {
-        if (isAutoScrollToSource()) {
+        if (PreviewUtil.isAutoScrollToSource(myProject)) {
             return;
         }
         // - "Open declaration source in the same tab" is focus based (#29) - ensure that component has focus
@@ -243,17 +233,5 @@ public class PreviewProjectHandler {
 
     public Project getProject() {
         return myProject;
-    }
-
-    public ProjectView getProjectView() {
-        return ProjectView.getInstance(getProject());
-    }
-
-    public AbstractProjectViewPane getCurrentProjectViewPane() {
-        return getProjectView().getCurrentProjectViewPane();
-    }
-
-    public boolean isAutoScrollToSource() {
-        return getProjectView().isAutoscrollToSource(getCurrentProjectViewPane().getId());
     }
 }
