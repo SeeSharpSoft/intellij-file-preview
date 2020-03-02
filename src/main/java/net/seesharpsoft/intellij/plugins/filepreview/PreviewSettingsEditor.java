@@ -16,7 +16,6 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
 
     private JCheckBox cbClosePreviewOnEmptySelection;
     private JPanel mainPanel;
-    private JCheckBox cbProjectViewFocusSupport;
     private JComboBox sbPreviewBehavior;
     private JCheckBox cbOpenEditorOnEditPreview;
     private JCheckBox cbPreviewClosedOnTabChange;
@@ -58,7 +57,6 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         Color previewTabColor = previewSettings.getPreviewTabColor();
         return isModified(cbClosePreviewOnEmptySelection, previewSettings.isPreviewClosedOnEmptySelection()) ||
                 isModified(cbPreviewClosedOnTabChange, previewSettings.isPreviewClosedOnTabChange()) ||
-                isModified(cbProjectViewFocusSupport, previewSettings.isProjectViewFocusSupport()) ||
                 isModified(cbOpenEditorOnEditPreview, previewSettings.isOpenEditorOnEditPreview()) ||
                 !Objects.equals(sbPreviewBehavior.getSelectedIndex(), previewSettings.getPreviewBehavior().ordinal()) ||
                 isModified(cbProjectViewOneClickToggle, previewSettings.isProjectViewToggleOneClick()) ||
@@ -74,7 +72,6 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         Color previewTabColor = previewSettings.getPreviewTabColor();
         cbClosePreviewOnEmptySelection.setSelected(previewSettings.isPreviewClosedOnEmptySelection());
         cbPreviewClosedOnTabChange.setSelected(previewSettings.isPreviewClosedOnTabChange());
-        cbProjectViewFocusSupport.setSelected(previewSettings.isProjectViewFocusSupport());
         cbOpenEditorOnEditPreview.setSelected(previewSettings.isOpenEditorOnEditPreview());
         sbPreviewBehavior.setSelectedIndex(previewSettings.getPreviewBehavior().ordinal());
         cbProjectViewOneClickToggle.setSelected(previewSettings.isProjectViewToggleOneClick());
@@ -90,7 +87,6 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         Color previewTabColor = cpPreviewTabColor.isSelected() ? cpPreviewTabColor.getColor() : null;
         previewSettings.setPreviewClosedOnEmptySelection(cbClosePreviewOnEmptySelection.isSelected());
         previewSettings.setPreviewClosedOnTabChange(cbPreviewClosedOnTabChange.isSelected());
-        previewSettings.setProjectViewFocusSupport(cbProjectViewFocusSupport.isSelected());
         previewSettings.setOpenEditorOnEditPreview(cbOpenEditorOnEditPreview.isSelected());
         previewSettings.setPreviewBehavior(PreviewSettings.PreviewBehavior.values()[sbPreviewBehavior.getSelectedIndex()]);
         previewSettings.setProjectViewToggleOneClick(cbProjectViewOneClickToggle.isSelected());

@@ -85,14 +85,6 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
         getState().CLOSE_PREVIEW_ON_TAB_CHANGE = previewClosedOnTabChange;
     }
 
-    public boolean isProjectViewFocusSupport() {
-        return getState().PROJECT_VIEW_FOCUS_SUPPORT;
-    }
-
-    public void setProjectViewFocusSupport(boolean projectViewFocusSupport) {
-        getState().PROJECT_VIEW_FOCUS_SUPPORT = projectViewFocusSupport;
-    }
-
     public boolean isOpenEditorOnEditPreview() {
         return getState().OPEN_EDITOR_ON_EDIT_PREVIEW;
     }

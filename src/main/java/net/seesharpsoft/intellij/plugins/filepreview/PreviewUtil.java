@@ -20,6 +20,8 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +36,8 @@ public final class PreviewUtil {
     }
 
     public static final Key<DocumentListener> PREVIEW_DOCUMENT_LISTENER = Key.create(PreviewUtil.class.getName() + "$PREVIEW_DOCUMENT_LISTENER_INSTANCE");
-    public static final Key<Boolean> OPENED_BY_PREVIEW = Key.create(PreviewUtil.class.getName() + "$OPENED_BY_PREVIEW");
+    public static final Key<Boolean> HANDLED_BY_PREVIEW = Key.create(PreviewUtil.class.getName() + "$HANDLED_BY_PREVIEW");
+    public static final Key<Boolean> SOURCE_WINDOW_IS_AUTO_HIDE = Key.create(PreviewUtil.class.getName() + "$SOURCE_WINDOW_IS_AUTO_HIDE");
 
     public static boolean isPreviewed(final VirtualFile file) {
         return file != null && file.getUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY) != null;
@@ -138,19 +141,18 @@ public final class PreviewUtil {
             return;
         }
         final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-        boolean requireFocus;
+        final boolean requireFocus;
         if (!fileEditorManager.isFileOpen(file)) {
             PreviewUtil.preparePreview(project, file);
             requireFocus = true;
         } else {
             requireFocus = !isEditorSelected(project, file);
         }
-        final boolean doesRequireFocus = requireFocus;
+
         invokeSafeAndWait(project, () -> {
             fileEditorManager.openFile(file, requestFocus);
-            if (doesRequireFocus) {
-                file.putUserData(OPENED_BY_PREVIEW, true);
-                focusProjectViewTreeIfNeeded(project, file);
+            if (requireFocus) {
+                focusProjectView(project);
             }
         });
     }
@@ -169,8 +171,18 @@ public final class PreviewUtil {
         if (!isValid(project) || file == null) {
             return;
         }
+        final ToolWindow projectViewToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
+        if (projectViewToolWindow == null) {
+            return;
+        }
         final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-        invokeSafeAndWait(project, () -> fileEditorManager.closeFile(file));
+        assert fileEditorManager.isFileOpen(file);
+        invokeSafeAndWait(project, () -> {
+            // Project panel auto-hides after file selecting #50
+            file.putUserData(SOURCE_WINDOW_IS_AUTO_HIDE, projectViewToolWindow.isAutoHide());
+            projectViewToolWindow.setAutoHide(false);
+            fileEditorManager.closeFile(file);
+        });
     }
 
     public static void closeAllPreviews(@NotNull final Project project) {
@@ -206,23 +218,29 @@ public final class PreviewUtil {
         return project != null && !project.isDisposed();
     }
 
-    protected static boolean shouldProjectViewTreeFocused(final Project project) {
-        return PreviewSettings.getInstance().isProjectViewFocusSupport();
-    }
+    public static void cleanupClosedFile(final Project project, @NotNull final VirtualFile file) {
+        // Project panel auto-hides after file selecting #50
+        if (file.getUserData(SOURCE_WINDOW_IS_AUTO_HIDE) != null && file.getUserData(SOURCE_WINDOW_IS_AUTO_HIDE)) {
+            final ToolWindow projectViewToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
+            if (projectViewToolWindow != null) {
+                projectViewToolWindow.setAutoHide(true);
+            }
+        }
+        file.putUserData(SOURCE_WINDOW_IS_AUTO_HIDE, null);
 
-    public static void focusProjectViewTreeIfNeeded(final Project project, final VirtualFile file) {
-        if (file.getUserData(PreviewUtil.OPENED_BY_PREVIEW) == null) {
+        if (file.getUserData(PreviewUtil.HANDLED_BY_PREVIEW) == null) {
             return;
         }
-        file.putUserData(PreviewUtil.OPENED_BY_PREVIEW, null);
+        file.putUserData(PreviewUtil.HANDLED_BY_PREVIEW, null);
+        focusProjectView(project);
+    }
 
+    public static void focusProjectView(final Project project) {
         AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane(project);
         if (currentProjectViewPane == null) {
             return;
         }
-        if (shouldProjectViewTreeFocused(project)) {
-            PreviewUtil.invokeSafe(project, () -> currentProjectViewPane.getTree().grabFocus());
-        }
+        PreviewUtil.invokeSafe(project, () -> currentProjectViewPane.getTree().grabFocus());
     }
 
     public static ProjectView getProjectView(final Project project) {

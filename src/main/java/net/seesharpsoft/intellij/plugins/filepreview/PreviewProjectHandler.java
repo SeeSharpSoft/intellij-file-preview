@@ -72,12 +72,21 @@ public class PreviewProjectHandler {
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
         @Override
         public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-
+            AbstractProjectViewPane currentProjectViewPane = PreviewUtil.getCurrentProjectViewPane(myProject);
+            if (currentProjectViewPane == null) {
+                return;
+            }
+            PreviewUtil.consumeSelectedFile(currentProjectViewPane.getTree(), selectedFile -> {
+                if (PreviewUtil.isPreviewed(file) ||
+                        (selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW))) {
+                    PreviewUtil.closeOtherPreviews(myProject, file);
+                }
+            });
         }
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            PreviewUtil.focusProjectViewTreeIfNeeded(myProject, file);
+            PreviewUtil.cleanupClosedFile(myProject, file);
         }
 
         @Override
@@ -96,23 +105,14 @@ public class PreviewProjectHandler {
     private final FileEditorManagerListener.Before myFileEditorManagerBeforeListener = new FileEditorManagerListener.Before() {
         @Override
         public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            AbstractProjectViewPane currentProjectViewPane = PreviewUtil.getCurrentProjectViewPane(myProject);
-            if (currentProjectViewPane == null) {
-                return;
-            }
-            PreviewUtil.consumeSelectedFile(currentProjectViewPane.getTree(), selectedFile -> {
-                if (PreviewUtil.isPreviewed(file) ||
-                        (selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW))) {
-                    PreviewUtil.closeOtherPreviews(myProject, file);
-                }
-            });
+
         }
 
         @Override
         public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
             if (PreviewUtil.isPreviewed(file)) {
                 if (PreviewUtil.isEditorSelected(myProject, file) && PreviewUtil.isProjectTreeFocused(myProject)) {
-                    file.putUserData(PreviewUtil.OPENED_BY_PREVIEW, true);
+                    file.putUserData(PreviewUtil.HANDLED_BY_PREVIEW, true);
                 }
                 PreviewUtil.invokeSafe(myProject, () -> PreviewUtil.disposePreview(myProject, file));
             }
