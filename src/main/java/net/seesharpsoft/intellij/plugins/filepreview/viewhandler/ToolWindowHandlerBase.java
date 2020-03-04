@@ -50,7 +50,12 @@ public abstract class ToolWindowHandlerBase implements PreviewViewHandler {
             return;
         }
 
-        ContentManager cm = ToolWindowManager.getInstance(previewProjectHandler.getProject()).getToolWindow(getToolWindowId()).getContentManager();
+        ToolWindow toolWindow = ToolWindowManager.getInstance(previewProjectHandler.getProject()).getToolWindow(getToolWindowId());
+        if (toolWindow == null) {
+            return;
+        }
+
+        ContentManager cm = toolWindow.getContentManager();
         ProjectToolWindowHandler.ContentManagerListener cml = registeredContentManagerListeners.get(previewProjectHandler);
         if (cm != null) {
             cm.removeContentManagerListener(cml);
