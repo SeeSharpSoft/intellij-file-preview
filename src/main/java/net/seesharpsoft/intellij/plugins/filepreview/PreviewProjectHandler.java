@@ -164,7 +164,7 @@ public class PreviewProjectHandler {
 
     public void unregisterTreeHandlers(@NotNull final JTree tree) {
         if (!areTreeHandlersRegistered(tree)) {
-            throw new UnsupportedOperationException("can not unregister unregistered tree");
+            return;
         }
 
         registeredTrees.remove(tree);
