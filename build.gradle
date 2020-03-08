@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.6.0'
+version '1.6.1'
 
 sourceCompatibility = 1.8
 
@@ -33,6 +33,8 @@ patchPluginXml {
 [FIX] Using keyboard arrow keys to navigate Project pane, File Preview grabs focus on second file visited #48
 [FIX] Project panel auto-hides after file selecting #50
 [NEW] keep collapse/expand state of folders in project view
+[FIX] java.lang.NullPointerException on closing of project #64
+[FIX] java.lang.UnsupportedOperationException on closing of project? #65
 </pre>
       """
 }
