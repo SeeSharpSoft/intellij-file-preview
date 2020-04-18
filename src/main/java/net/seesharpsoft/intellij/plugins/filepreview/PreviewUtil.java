@@ -48,7 +48,7 @@ public final class PreviewUtil {
     }
 
     public static void disposePreview(final Project project, final VirtualFile file, final boolean updateRepresentation) {
-        if (!isValid(project) || file == null) {
+        if (!isValid(project) || file == null || !isPreviewed(file)) {
             return;
         }
 
