@@ -27,7 +27,7 @@
     <!-- http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html -->
     <depends>com.intellij.modules.lang</depends>
 
-    <idea-version since-build="182.5262.2" />
+    <idea-version since-build="183.5353.1" />
 
     <extensions defaultExtensionNs="com.intellij">
         <postStartupActivity implementation="net.seesharpsoft.intellij.plugins.filepreview.PreviewStartupActivity" order="first" />
