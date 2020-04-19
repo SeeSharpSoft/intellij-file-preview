@@ -83,7 +83,18 @@ public class PreviewProjectHandler {
 
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
         @Override
-        public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) { }
+        public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+            AbstractProjectViewPane currentProjectViewPane = PreviewUtil.getCurrentProjectViewPane(myProject);
+            if (currentProjectViewPane == null) {
+                return;
+            }
+            PreviewUtil.consumeSelectedFile(currentProjectViewPane.getTree(), selectedFile -> {
+                if (PreviewUtil.isPreviewed(file) ||
+                        (selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW))) {
+                    PreviewUtil.closeOtherPreviews(myProject, file);
+                }
+            });
+        }
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
@@ -114,18 +125,7 @@ public class PreviewProjectHandler {
 
     private final FileEditorManagerListener.Before myFileEditorManagerBeforeListener = new FileEditorManagerListener.Before() {
         @Override
-        public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            AbstractProjectViewPane currentProjectViewPane = PreviewUtil.getCurrentProjectViewPane(myProject);
-            if (currentProjectViewPane == null) {
-                return;
-            }
-            PreviewUtil.consumeSelectedFile(currentProjectViewPane.getTree(), selectedFile -> {
-                if (PreviewUtil.isPreviewed(file) ||
-                        (selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW))) {
-                    PreviewUtil.closeOtherPreviews(myProject, file);
-                }
-            });
-        }
+        public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) { }
 
         @Override
         public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
