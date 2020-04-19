@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.6.1'
+version '1.6.2'
 
 sourceCompatibility = 1.8
 
@@ -29,12 +29,8 @@ intellij {
 patchPluginXml {
     changeNotes """
 <pre style="font-family: sans-serif">
-[FIX] When using navigate ctrl-F12 or F12 it will leaves the explorer focused #43
 [FIX] Using keyboard arrow keys to navigate Project pane, File Preview grabs focus on second file visited #48
-[FIX] Project panel auto-hides after file selecting #50
-[NEW] keep collapse/expand state of folders in project view
-[FIX] java.lang.NullPointerException on closing of project #64
-[FIX] java.lang.UnsupportedOperationException on closing of project? #65
+[FIX] Navigate back and forward not working when Always Select Opened File is on #67
 </pre>
       """
 }
