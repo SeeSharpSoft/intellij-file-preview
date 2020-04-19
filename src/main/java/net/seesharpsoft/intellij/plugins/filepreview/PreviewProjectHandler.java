@@ -47,15 +47,18 @@ public class PreviewProjectHandler {
     };
 
     private final TreeSelectionListener myTreeSelectionListener = treeSelectionEvent -> {
-        PreviewUtil.consumeSelectedFile((Component)treeSelectionEvent.getSource(), file -> {
+        PreviewUtil.consumeSelectedFile((Component) treeSelectionEvent.getSource(), file -> {
             VirtualFile gotoFile = PreviewUtil.getGotoFile(myProject, file);
             if (gotoFile == null) {
                 return;
             }
-            if(gotoFile.getUserData(PreviewUtil.HANDLED_BY_PREVIEW) == null) {
+            if (gotoFile.getUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING) == null) {
+                if (!gotoFile.isDirectory()) {
+                    gotoFile.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, true);
+                }
                 openOrFocusSelectedFile((Component) treeSelectionEvent.getSource());
             } else {
-                gotoFile.putUserData(PreviewUtil.HANDLED_BY_PREVIEW, null);
+                gotoFile.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, null);
             }
         });
     };
@@ -80,18 +83,7 @@ public class PreviewProjectHandler {
 
     private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerListener() {
         @Override
-        public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            AbstractProjectViewPane currentProjectViewPane = PreviewUtil.getCurrentProjectViewPane(myProject);
-            if (currentProjectViewPane == null) {
-                return;
-            }
-            PreviewUtil.consumeSelectedFile(currentProjectViewPane.getTree(), selectedFile -> {
-                if (PreviewUtil.isPreviewed(file) ||
-                        (selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW))) {
-                    PreviewUtil.closeOtherPreviews(myProject, file);
-                }
-            });
-        }
+        public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) { }
 
         @Override
         public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
@@ -101,8 +93,13 @@ public class PreviewProjectHandler {
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
             VirtualFile gotoFile = PreviewUtil.getGotoFile(myProject, event.getNewFile());
-            if (gotoFile != null) {
-                gotoFile.putUserData(PreviewUtil.HANDLED_BY_PREVIEW, true);
+            if (gotoFile != null && !gotoFile.isDirectory()) {
+                if (gotoFile.getUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING) == null) {
+                    // if not marked, the selection change is not
+                    gotoFile.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, true);
+                } else {
+                    gotoFile.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, null);
+                }
             }
             AbstractProjectViewPane currentProjectViewPane = PreviewUtil.getCurrentProjectViewPane(myProject);
             if (currentProjectViewPane != null && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW) && !PreviewUtil.isPreviewed(gotoFile)) {
@@ -118,15 +115,24 @@ public class PreviewProjectHandler {
     private final FileEditorManagerListener.Before myFileEditorManagerBeforeListener = new FileEditorManagerListener.Before() {
         @Override
         public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-
+            AbstractProjectViewPane currentProjectViewPane = PreviewUtil.getCurrentProjectViewPane(myProject);
+            if (currentProjectViewPane == null) {
+                return;
+            }
+            PreviewUtil.consumeSelectedFile(currentProjectViewPane.getTree(), selectedFile -> {
+                if (PreviewUtil.isPreviewed(file) ||
+                        (selectedFile != null && selectedFile.equals(file) && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW))) {
+                    PreviewUtil.closeOtherPreviews(myProject, file);
+                }
+            });
         }
 
         @Override
         public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-            file.putUserData(PreviewUtil.HANDLED_BY_PREVIEW, null);
+            file.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, null);
             if (PreviewUtil.isPreviewed(file)) {
                 if (PreviewUtil.isEditorSelected(myProject, file) && PreviewUtil.isProjectTreeFocused(myProject)) {
-                    file.putUserData(PreviewUtil.HANDLED_BY_PREVIEW, true);
+                    file.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, true);
                 }
                 if (!UISettings.getInstance().getState().getReuseNotModifiedTabs()) {
                     PreviewUtil.invokeSafe(myProject, () -> PreviewUtil.disposePreview(myProject, file, false));

@@ -36,7 +36,8 @@ public final class PreviewUtil {
     }
 
     public static final Key<DocumentListener> PREVIEW_DOCUMENT_LISTENER = Key.create(PreviewUtil.class.getName() + "$PREVIEW_DOCUMENT_LISTENER_INSTANCE");
-    public static final Key<Boolean> HANDLED_BY_PREVIEW = Key.create(PreviewUtil.class.getName() + "$HANDLED_BY_PREVIEW");
+    // marking of files that are opened/closed due to interactions that requires further handling
+    public static final Key<Boolean> REQUIRES_PREVIEW_HANDLING = Key.create(PreviewUtil.class.getName() + "$HANDLED_BY_PREVIEW");
     public static final Key<Boolean> SOURCE_WINDOW_IS_AUTO_HIDE = Key.create(PreviewUtil.class.getName() + "$SOURCE_WINDOW_IS_AUTO_HIDE");
 
     public static boolean isPreviewed(final VirtualFile file) {
@@ -228,10 +229,10 @@ public final class PreviewUtil {
         }
         file.putUserData(SOURCE_WINDOW_IS_AUTO_HIDE, null);
 
-        if (file.getUserData(PreviewUtil.HANDLED_BY_PREVIEW) == null) {
+        if (file.getUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING) == null) {
             return;
         }
-        file.putUserData(PreviewUtil.HANDLED_BY_PREVIEW, null);
+        file.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, null);
         focusProjectView(project);
     }
 
