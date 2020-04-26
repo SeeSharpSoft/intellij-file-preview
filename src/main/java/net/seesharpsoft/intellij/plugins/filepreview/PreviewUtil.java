@@ -232,7 +232,7 @@ public final class PreviewUtil {
         if (file.getUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING) == null) {
             return;
         }
-        file.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, null);
+        unmarkPreviewHandling(file);
         focusProjectView(project);
     }
 
@@ -242,6 +242,39 @@ public final class PreviewUtil {
             return;
         }
         PreviewUtil.invokeSafe(project, () -> currentProjectViewPane.getTree().grabFocus());
+    }
+
+    public static void toggleMarkPreviewHandling(VirtualFile file, Consumer<VirtualFile> onMark, Consumer<VirtualFile> onUnmark) {
+        if (file != null) {
+            if (file.getUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING) == null) {
+                // if not marked, the selection change is not
+                markPreviewHandling(file);
+                if (onMark != null) {
+                    onMark.accept(file);
+                }
+            } else {
+                unmarkPreviewHandling(file);
+                if (onUnmark != null) {
+                    onUnmark.accept(file);
+                }
+            }
+        }
+    }
+
+    public static void toggleMarkPreviewHandling(VirtualFile file) {
+        toggleMarkPreviewHandling(file, null, null);
+    }
+
+    public static void markPreviewHandling(@NotNull VirtualFile file) {
+        if (!file.isDirectory()) {
+            file.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, true);
+        }
+    }
+
+    public static void unmarkPreviewHandling(@NotNull VirtualFile file) {
+        if (!file.isDirectory()) {
+            file.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, null);
+        }
     }
 
     public static ProjectView getProjectView(final Project project) {

@@ -1,7 +1,6 @@
 package net.seesharpsoft.intellij.plugins.filepreview;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -49,17 +48,7 @@ public class PreviewProjectHandler {
     private final TreeSelectionListener myTreeSelectionListener = treeSelectionEvent -> {
         PreviewUtil.consumeSelectedFile((Component) treeSelectionEvent.getSource(), file -> {
             VirtualFile gotoFile = PreviewUtil.getGotoFile(myProject, file);
-            if (gotoFile == null) {
-                return;
-            }
-            if (gotoFile.getUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING) == null) {
-                if (!gotoFile.isDirectory()) {
-                    gotoFile.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, true);
-                }
-                openOrFocusSelectedFile((Component) treeSelectionEvent.getSource());
-            } else {
-                gotoFile.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, null);
-            }
+            PreviewUtil.toggleMarkPreviewHandling(gotoFile, theFile -> openOrFocusSelectedFile((Component) treeSelectionEvent.getSource()), null);
         });
     };
 
@@ -103,15 +92,11 @@ public class PreviewProjectHandler {
 
         @Override
         public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-            VirtualFile gotoFile = PreviewUtil.getGotoFile(myProject, event.getNewFile());
-            if (gotoFile != null && !gotoFile.isDirectory()) {
-                if (gotoFile.getUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING) == null) {
-                    // if not marked, the selection change is not
-                    gotoFile.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, true);
-                } else {
-                    gotoFile.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, null);
-                }
+            if (event.getOldFile() != null) {
+                PreviewUtil.unmarkPreviewHandling(event.getOldFile());
             }
+            VirtualFile gotoFile = PreviewUtil.getGotoFile(myProject, event.getNewFile());
+            PreviewUtil.toggleMarkPreviewHandling(gotoFile);
             AbstractProjectViewPane currentProjectViewPane = PreviewUtil.getCurrentProjectViewPane(myProject);
             if (currentProjectViewPane != null && !PreviewSettings.getInstance().getPreviewBehavior().equals(EXPLICIT_PREVIEW) && !PreviewUtil.isPreviewed(gotoFile)) {
                 PreviewUtil.consumeSelectedFile(currentProjectViewPane.getTree(), file -> {
@@ -134,9 +119,7 @@ public class PreviewProjectHandler {
                 if (PreviewUtil.isEditorSelected(myProject, file) && PreviewUtil.isProjectTreeFocused(myProject)) {
                     file.putUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING, true);
                 }
-                if (!UISettings.getInstance().getState().getReuseNotModifiedTabs()) {
-                    PreviewUtil.invokeSafe(myProject, () -> PreviewUtil.disposePreview(myProject, file, false));
-                }
+                PreviewUtil.invokeSafe(myProject, () -> PreviewUtil.disposePreview(myProject, file, false));
             }
         }
     };

@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.6.2'
+version '1.6.3'
 
 sourceCompatibility = 1.8
 
@@ -29,8 +29,8 @@ intellij {
 patchPluginXml {
     changeNotes """
 <pre style="font-family: sans-serif">
-[FIX] Using keyboard arrow keys to navigate Project pane, File Preview grabs focus on second file visited #48
-[FIX] Navigate back and forward not working when Always Select Opened File is on #67
+[FIX] Sometimes already opened file is not focused
+[FIX] Not removing preview marker on close leads to inconsistent preview & focus behavior
 </pre>
       """
 }
