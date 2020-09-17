@@ -7,7 +7,7 @@ plugins {
 }
 
 group 'net.seesharpsoft.intellij.plugins'
-version '1.6.3'
+version '1.6.4'
 
 sourceCompatibility = 1.8
 
@@ -29,8 +29,7 @@ intellij {
 patchPluginXml {
     changeNotes """
 <pre style="font-family: sans-serif">
-[FIX] Sometimes already opened file is not focused
-[FIX] Not removing preview marker on close leads to inconsistent preview & focus behavior
+[FIX] Unwanted focus shifting in project view when "Always Select Opened File" is enabled
 </pre>
       """
 }
