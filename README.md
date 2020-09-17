@@ -47,6 +47,12 @@ Defines the required number of clicks to expand/collapse a node in Project View 
 
 If enabled, the expand/collapse states of the folders are kept when a parent folder gets collapsed/expanded.
 
+#### Close preview if no file selected (*enabled*)
+
+Switching the focus in the Project View to an directory or non-displayable element, the preview is closed. Disable to keep the last Preview Editor tab.
+
+Please note: Due to [unwanted side effects](https://github.com/SeeSharpSoft/intellij-file-preview/issues/77), this setting has no effect if **[Always Select Opened File](https://www.jetbrains.com/help/idea/navigating-through-the-source-code.html#scroll_to_from_source)** is enabled.
+
 ### Preview Editor Tab
 
 #### Tab title pattern (*<<%s>>*)
@@ -57,11 +63,7 @@ Defines how the file name is formatted in the preview tab title, while **%s** re
 
 Sets a custom background color for the preview tab.
 
-#### Close tab if no file is selected (*enabled*)
-
-Switching the focus in the Project View to an directory or non-displayable element, the preview is closed. Disable to keep the last Preview Editor tab.
-
-#### Close tab if other tab is selected (*disabled*)
+#### Close preview if other tab is selected (*disabled*)
 
 Switching editor tabs does not close the current Preview Editor tab on default.
 

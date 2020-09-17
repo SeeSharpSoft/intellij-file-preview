@@ -136,7 +136,7 @@ public final class PreviewUtil {
 
     private static void openPreviewOrEditor(@NotNull final Project project, final VirtualFile file, final boolean requestFocus) {
         if (!isValid(project) || file == null || file.isDirectory() || !file.isValid()) {
-            if (PreviewSettings.getInstance().isPreviewClosedOnEmptySelection()) {
+            if (PreviewSettings.getInstance().isPreviewClosedOnEmptySelection() && !isAutoScrollFromSource(project)) {
                 closeOtherPreviews(project, file);
             }
             return;
