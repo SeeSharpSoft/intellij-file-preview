@@ -9,7 +9,7 @@ plugins {
 group 'net.seesharpsoft.intellij.plugins'
 version '1.6.4'
 
-sourceCompatibility = 1.8
+sourceCompatibility = 1.11
 
 repositories {
     mavenCentral()
