@@ -15,6 +15,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Key;
@@ -39,6 +41,7 @@ public final class PreviewUtil {
     // marking of files that are opened/closed due to interactions that requires further handling
     public static final Key<Boolean> REQUIRES_PREVIEW_HANDLING = Key.create(PreviewUtil.class.getName() + "$HANDLED_BY_PREVIEW");
     public static final Key<Boolean> SOURCE_WINDOW_IS_AUTO_HIDE = Key.create(PreviewUtil.class.getName() + "$SOURCE_WINDOW_IS_AUTO_HIDE");
+    public static final boolean DEBUG = false;
 
     public static boolean isPreviewed(final VirtualFile file) {
         return file != null && file.getUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY) != null;
@@ -247,10 +250,12 @@ public final class PreviewUtil {
     public static void toggleMarkPreviewHandling(VirtualFile file, Consumer<VirtualFile> onMark, Consumer<VirtualFile> onUnmark) {
         if (file != null) {
             if (file.getUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING) == null) {
-                // if not marked, the selection change is not
-                markPreviewHandling(file);
-                if (onMark != null) {
-                    onMark.accept(file);
+                if (isFileQualifiedForPreview(file)) {
+                    // if not marked, the selection change is not
+                    markPreviewHandling(file);
+                    if (onMark != null) {
+                        onMark.accept(file);
+                    }
                 }
             } else {
                 unmarkPreviewHandling(file);
@@ -259,6 +264,42 @@ public final class PreviewUtil {
                 }
             }
         }
+    }
+
+    private static boolean isFileQualifiedForPreview(VirtualFile file) {
+
+        boolean qualified = isFileQualifiedBySize(file);
+        if (qualified) {
+            qualified = isFileQualifiedByType(file);
+        }
+        if (DEBUG) {
+            System.out.printf("file (%s) type: %s, size : %6.1f kB, q: %d %n", file.getName(), file.getFileType().getName(), file.getLength() / 1024.0, qualified ? 1 : 0);
+        }
+        return qualified;
+    }
+
+    private static boolean isFileQualifiedBySize(VirtualFile file) {
+        int fileSizeLimit = Integer.parseInt(PreviewSettings.getInstance().getFileSizeLimitKB()) * 1024;
+        if (fileSizeLimit > 0) {
+            long fileLength = file.getLength();
+            if (DEBUG) {
+                System.out.printf("file size: %d, limit: %d%n", fileLength, fileSizeLimit);
+            }
+            return fileLength <= fileSizeLimit;
+        }
+        return true;
+    }
+
+    private static boolean isFileQualifiedByType(VirtualFile file) {
+        boolean previewOnlyKnownFileTypes = PreviewSettings.getInstance().isPreviewOnlyKnownFileTypes();
+        if (previewOnlyKnownFileTypes) {
+            FileType type = file.getFileType();
+            if (DEBUG) {
+                System.out.printf("file type: %s%n", type.getName());
+            }
+            return (!type.isBinary()) && (type != UnknownFileType.INSTANCE);
+        }
+        return true;
     }
 
     public static void toggleMarkPreviewHandling(VirtualFile file) {
