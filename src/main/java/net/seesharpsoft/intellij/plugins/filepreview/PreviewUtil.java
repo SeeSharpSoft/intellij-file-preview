@@ -41,7 +41,6 @@ public final class PreviewUtil {
     // marking of files that are opened/closed due to interactions that requires further handling
     public static final Key<Boolean> REQUIRES_PREVIEW_HANDLING = Key.create(PreviewUtil.class.getName() + "$HANDLED_BY_PREVIEW");
     public static final Key<Boolean> SOURCE_WINDOW_IS_AUTO_HIDE = Key.create(PreviewUtil.class.getName() + "$SOURCE_WINDOW_IS_AUTO_HIDE");
-    public static final boolean DEBUG = false;
 
     public static boolean isPreviewed(final VirtualFile file) {
         return file != null && file.getUserData(PreviewProjectHandler.PREVIEW_VIRTUAL_FILE_KEY) != null;
@@ -272,9 +271,6 @@ public final class PreviewUtil {
         if (qualified) {
             qualified = isFileQualifiedByType(file);
         }
-        if (DEBUG) {
-            System.out.printf("file (%s) type: %s, size : %6.1f kB, q: %d %n", file.getName(), file.getFileType().getName(), file.getLength() / 1024.0, qualified ? 1 : 0);
-        }
         return qualified;
     }
 
@@ -282,9 +278,6 @@ public final class PreviewUtil {
         int fileSizeLimit = Integer.parseInt(PreviewSettings.getInstance().getFileSizeLimitKB()) * 1024;
         if (fileSizeLimit > 0) {
             long fileLength = file.getLength();
-            if (DEBUG) {
-                System.out.printf("file size: %d, limit: %d%n", fileLength, fileSizeLimit);
-            }
             return fileLength <= fileSizeLimit;
         }
         return true;
@@ -294,9 +287,6 @@ public final class PreviewUtil {
         boolean previewOnlyKnownFileTypes = PreviewSettings.getInstance().isPreviewOnlyKnownFileTypes();
         if (previewOnlyKnownFileTypes) {
             FileType type = file.getFileType();
-            if (DEBUG) {
-                System.out.printf("file type: %s%n", type.getName());
-            }
             return (!type.isBinary()) && (type != UnknownFileType.INSTANCE);
         }
         return true;
