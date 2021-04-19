@@ -275,7 +275,7 @@ public final class PreviewUtil {
     }
 
     private static boolean isFileQualifiedBySize(VirtualFile file) {
-        int fileSizeLimit = Integer.parseInt(PreviewSettings.getInstance().getFileSizeLimitKB()) * 1024;
+        int fileSizeLimit = PreviewSettings.getInstance().getFileSizeLimitKB() * 1024;
         if (fileSizeLimit > 0) {
             long fileLength = file.getLength();
             return fileLength <= fileSizeLimit;

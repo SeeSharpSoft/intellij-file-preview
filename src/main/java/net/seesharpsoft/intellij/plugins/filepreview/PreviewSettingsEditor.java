@@ -23,7 +23,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     private CheckBoxWithColorChooser cpPreviewTabColor;
     private JTextField txtTitlePattern;
     private JCheckBox cbKeepExpandCollapseState;
-    private JFormattedTextField txtFileSizeLimit;
+    private JTextField txtFileSizeLimit;
     private JCheckBox cbPreviewOnlyKnownFileTypes;
 
     protected void createUIComponents() {
@@ -66,7 +66,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
                 !Objects.equals(cpPreviewTabColor.getColor(), previewTabColor) ||
                 !Objects.equals(txtTitlePattern.getText(), previewSettings.getPreviewTabTitlePattern()) ||
                 isModified(cbKeepExpandCollapseState, previewSettings.isKeepExpandCollapseState()) ||
-                !Objects.equals(txtFileSizeLimit.getText(), previewSettings.getFileSizeLimitKB()) ||
+                getFileSizeLimitKB() != previewSettings.getFileSizeLimitKB() ||
                 isModified(cbPreviewOnlyKnownFileTypes, previewSettings.isPreviewOnlyKnownFileTypes());
     }
 
@@ -83,7 +83,7 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         cpPreviewTabColor.setSelected(previewTabColor != null);
         txtTitlePattern.setText(previewSettings.getPreviewTabTitlePattern());
         cbKeepExpandCollapseState.setSelected(previewSettings.isKeepExpandCollapseState());
-        txtFileSizeLimit.setText(previewSettings.getFileSizeLimitKB());
+        txtFileSizeLimit.setText(previewSettings.getFileSizeLimitKB().toString());
         cbPreviewOnlyKnownFileTypes.setSelected(previewSettings.isPreviewOnlyKnownFileTypes());
     }
 
@@ -99,8 +99,12 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         previewSettings.setPreviewTabColor(previewTabColor);
         previewSettings.setPreviewTabTitlePattern(txtTitlePattern.getText());
         previewSettings.setKeepExpandCollapseState(cbKeepExpandCollapseState.isSelected());
-        previewSettings.setFileSizeLimitKB(txtFileSizeLimit.getText());
+        previewSettings.setFileSizeLimitKB(getFileSizeLimitKB());
         previewSettings.setPreviewOnlyKnownFileTypes(cbPreviewOnlyKnownFileTypes.isSelected());
+    }
+
+    private int getFileSizeLimitKB() {
+        return Integer.parseInt(txtFileSizeLimit.getText());
     }
 
 }

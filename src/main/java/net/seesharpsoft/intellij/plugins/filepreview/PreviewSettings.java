@@ -37,7 +37,7 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
         public String PREVIEW_TAB_TITLE_PATTERN = "<<%s>>";
         public String PREVIEW_TAB_COLOR;
         public boolean KEEP_EXPAND_COLLAPSE_STATE = true;
-        public String PREVIEW_FILE_SIZE_LIMIT_KB = "0";
+        public Integer PREVIEW_FILE_SIZE_LIMIT_KB = 0;
         public boolean PREVIEW_ONLY_KNOWN_FILE_TYPES = false;
     }
 
@@ -141,11 +141,11 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
         getState().PREVIEW_TAB_TITLE_PATTERN = titlePattern;
     }
 
-    public String getFileSizeLimitKB() {
+    public Integer getFileSizeLimitKB() {
         return getState().PREVIEW_FILE_SIZE_LIMIT_KB;
     }
 
-    public void setFileSizeLimitKB(String fileSizeLimit) {
+    public void setFileSizeLimitKB(Integer fileSizeLimit) {
         getState().PREVIEW_FILE_SIZE_LIMIT_KB = fileSizeLimit;
     }
 
