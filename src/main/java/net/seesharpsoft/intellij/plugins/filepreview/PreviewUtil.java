@@ -15,6 +15,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Key;
@@ -247,10 +249,12 @@ public final class PreviewUtil {
     public static void toggleMarkPreviewHandling(VirtualFile file, Consumer<VirtualFile> onMark, Consumer<VirtualFile> onUnmark) {
         if (file != null) {
             if (file.getUserData(PreviewUtil.REQUIRES_PREVIEW_HANDLING) == null) {
-                // if not marked, the selection change is not
-                markPreviewHandling(file);
-                if (onMark != null) {
-                    onMark.accept(file);
+                if (isFileQualifiedForPreview(file)) {
+                    // if not marked, the selection change is not
+                    markPreviewHandling(file);
+                    if (onMark != null) {
+                        onMark.accept(file);
+                    }
                 }
             } else {
                 unmarkPreviewHandling(file);
@@ -259,6 +263,33 @@ public final class PreviewUtil {
                 }
             }
         }
+    }
+
+    private static boolean isFileQualifiedForPreview(VirtualFile file) {
+
+        boolean qualified = isFileQualifiedBySize(file);
+        if (qualified) {
+            qualified = isFileQualifiedByType(file);
+        }
+        return qualified;
+    }
+
+    private static boolean isFileQualifiedBySize(VirtualFile file) {
+        int fileSizeLimit = PreviewSettings.getInstance().getFileSizeLimitKB() * 1024;
+        if (fileSizeLimit > 0) {
+            long fileLength = file.getLength();
+            return fileLength <= fileSizeLimit;
+        }
+        return true;
+    }
+
+    private static boolean isFileQualifiedByType(VirtualFile file) {
+        boolean previewOnlyKnownFileTypes = PreviewSettings.getInstance().isPreviewOnlyKnownFileTypes();
+        if (previewOnlyKnownFileTypes) {
+            FileType type = file.getFileType();
+            return (!type.isBinary()) && (type != UnknownFileType.INSTANCE);
+        }
+        return true;
     }
 
     public static void toggleMarkPreviewHandling(VirtualFile file) {

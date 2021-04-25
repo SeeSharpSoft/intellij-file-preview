@@ -23,6 +23,8 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
     private CheckBoxWithColorChooser cpPreviewTabColor;
     private JTextField txtTitlePattern;
     private JCheckBox cbKeepExpandCollapseState;
+    private JTextField txtFileSizeLimit;
+    private JCheckBox cbPreviewOnlyKnownFileTypes;
 
     protected void createUIComponents() {
         cpPreviewTabColor = new CheckBoxWithColorChooser("Tab color   ");
@@ -63,7 +65,9 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
                 !Objects.equals(cpPreviewTabColor.isSelected(), previewTabColor != null) ||
                 !Objects.equals(cpPreviewTabColor.getColor(), previewTabColor) ||
                 !Objects.equals(txtTitlePattern.getText(), previewSettings.getPreviewTabTitlePattern()) ||
-                isModified(cbKeepExpandCollapseState, previewSettings.isKeepExpandCollapseState());
+                isModified(cbKeepExpandCollapseState, previewSettings.isKeepExpandCollapseState()) ||
+                getFileSizeLimitKB() != previewSettings.getFileSizeLimitKB() ||
+                isModified(cbPreviewOnlyKnownFileTypes, previewSettings.isPreviewOnlyKnownFileTypes());
     }
 
     @Override
@@ -79,6 +83,8 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         cpPreviewTabColor.setSelected(previewTabColor != null);
         txtTitlePattern.setText(previewSettings.getPreviewTabTitlePattern());
         cbKeepExpandCollapseState.setSelected(previewSettings.isKeepExpandCollapseState());
+        txtFileSizeLimit.setText(previewSettings.getFileSizeLimitKB().toString());
+        cbPreviewOnlyKnownFileTypes.setSelected(previewSettings.isPreviewOnlyKnownFileTypes());
     }
 
     @Override
@@ -93,6 +99,12 @@ public class PreviewSettingsEditor implements SearchableConfigurable {
         previewSettings.setPreviewTabColor(previewTabColor);
         previewSettings.setPreviewTabTitlePattern(txtTitlePattern.getText());
         previewSettings.setKeepExpandCollapseState(cbKeepExpandCollapseState.isSelected());
+        previewSettings.setFileSizeLimitKB(getFileSizeLimitKB());
+        previewSettings.setPreviewOnlyKnownFileTypes(cbPreviewOnlyKnownFileTypes.isSelected());
+    }
+
+    private int getFileSizeLimitKB() {
+        return Integer.parseInt(txtFileSizeLimit.getText());
     }
 
 }

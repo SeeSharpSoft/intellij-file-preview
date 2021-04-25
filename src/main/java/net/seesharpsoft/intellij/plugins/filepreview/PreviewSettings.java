@@ -37,6 +37,8 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
         public String PREVIEW_TAB_TITLE_PATTERN = "<<%s>>";
         public String PREVIEW_TAB_COLOR;
         public boolean KEEP_EXPAND_COLLAPSE_STATE = true;
+        public Integer PREVIEW_FILE_SIZE_LIMIT_KB = 0;
+        public boolean PREVIEW_ONLY_KNOWN_FILE_TYPES = false;
     }
 
     private OptionSet myOptions = new OptionSet();
@@ -110,6 +112,13 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
         getState().PROJECT_VIEW_TOGGLE_ONE_CLICK = projectViewToggleOneClick;
         myPropertyChangeSupport.firePropertyChange("ProjectViewToggleOneClick", oldValue, projectViewToggleOneClick);
     }
+    public boolean isPreviewOnlyKnownFileTypes() {
+        return getState().PREVIEW_ONLY_KNOWN_FILE_TYPES;
+    }
+
+    public void setPreviewOnlyKnownFileTypes(boolean previewOnlyKnownFileTypes) {
+        getState().PREVIEW_ONLY_KNOWN_FILE_TYPES = previewOnlyKnownFileTypes;
+    }
 
     public Color getPreviewTabColor() {
         String color = getState().PREVIEW_TAB_COLOR;
@@ -130,6 +139,14 @@ public final class PreviewSettings implements PersistentStateComponent<PreviewSe
 
     public void setPreviewTabTitlePattern(String titlePattern) {
         getState().PREVIEW_TAB_TITLE_PATTERN = titlePattern;
+    }
+
+    public Integer getFileSizeLimitKB() {
+        return getState().PREVIEW_FILE_SIZE_LIMIT_KB;
+    }
+
+    public void setFileSizeLimitKB(Integer fileSizeLimit) {
+        getState().PREVIEW_FILE_SIZE_LIMIT_KB = fileSizeLimit;
     }
 
     public boolean isKeepExpandCollapseState() {

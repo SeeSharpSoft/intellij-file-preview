@@ -13,7 +13,9 @@
             <li>focus editor of selected file if already opened</li>
             <li>open/close tree nodes on single click</li>
             <li>settings page to individualize preview behavior</li>
-            <li><b>NEW</b> setting to keep collapse/expand state of folders in project view (enabled by default)</li>
+            <li>setting to keep collapse/expand state of folders in project view (enabled by default)</li>
+            <li><b>NEW</b>setting to limit files of a maximum size for preview (disabled by default (0 = disable))</li>
+            <li><b>NEW</b>setting to preview only files of known file type (disabled by default)</li>
         </ul>
         <br>
         <b>Please note:</b> If <a href="https://www.jetbrains.com/help/idea/navigating-through-the-source-code.html#scroll_to_from_sourc" target="_blank">Autoscroll to source/Open files with single click</a> is enabled, the actual editor tab is opened instead of a preview, as it is intended by this option. Therefore, to make use of the preview tab, <b>Autoscroll to source/Open files with single click</b> must be disabled!
