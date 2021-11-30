@@ -1,3 +1,7 @@
+**PLEASE NOTE: This project is no longer maintained due to an added [built-in functionality in IntelliJ](https://www.jetbrains.com/help/idea/using-code-editor.html#preview-tab) to preview files, which works quite similar to this plugin.**
+
+---
+
 [![Logo](https://github.com/SeeSharpSoft/intellij-file-preview/blob/master/src/main/resources/META-INF/pluginIcon.svg)](https://plugins.jetbrains.com/plugin/12778-file-preview) 
 [![Plugin version](https://img.shields.io/jetbrains/plugin/d/12778-file-preview.svg)](https://plugins.jetbrains.com/plugin/12778-file-preview)
 [![Build Status](https://travis-ci.org/SeeSharpSoft/intellij-file-preview.svg?branch=master)](https://travis-ci.org/SeeSharpSoft/intellij-file-preview)
